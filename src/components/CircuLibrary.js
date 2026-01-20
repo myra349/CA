@@ -1,159 +1,138 @@
 import React, { useState, useEffect, useRef } from "react";
 
-
-/* ===== USERS ===== */
+/* ================= USERS ================= */
 const STUDENTS = ["Ravi", "Sita", "Rahul", "Ananya", "Vikram", "Neha", "Aditya"];
-const FACULTY = ["Prof. Anil", "Dr. Meera", "Prof. Kiran", "Dr. Sushma"];
-const CENTRAL = ["John", "Mary", "Ramesh"];
 
-/* ===== QUERY CATEGORIES & PRIORITIES ===== */
-const categories = ["Exams", "Facilities", "Library", "Lab", "Sports", "Events", "Fees"];
-const priorities = ["High", "Medium", "Low"];
-
-/* ===== SPECIFIC ISSUES ===== */
+/* ================= REALISTIC ISSUES ================= */
 const issueMap = {
   Exams: [
-    "Exam hall allotment incorrect",
-    "Timetable clash found",
-    "Marks not updated",
-    "Re-evaluation request",
-    "Hall ticket not generated"
-  ],
-  Library: [
-    "Books not available",
-    "Reading room full",
-    "Library access not working",
-    "E-resources down",
-    "WiFi weak inside library"
-  ],
-  Facilities: [
-    "Water cooler not working",
-    "Restroom unclean",
-    "AC not working",
-    "Broken bench in corridor",
-    "Electricity fluctuation"
-  ],
-  Lab: [
-    "Computer not booting",
-    "Network down",
-    "Equipment missing",
-    "Software license expired",
-    "Server offline"
-  ],
-  Sports: [
-    "Gym treadmill broken",
-    "Cricket kit missing",
-    "Ground booking conflict",
-    "Coach unavailable",
-    "Sports shoes not issued"
-  ],
-  Events: [
-    "Registration link broken",
-    "Event timing unclear",
-    "Venue change not updated",
-    "ID card requirement unclear",
-    "Certificate not issued"
+    {
+      title: "Hall ticket not generated",
+      story:
+        "I paid exam fee 10 days ago but hall ticket is still not generated. My exam is tomorrow. Please resolve urgently."
+    },
+    {
+      title: "Internal marks missing",
+      story:
+        "My internal marks for AI subject are not showing in portal though faculty confirmed submission."
+    }
   ],
   Fees: [
-    "Wrong late fee added",
-    "Fee receipt missing",
-    "Scholarship delayed",
-    "Payment failed",
-    "Excess deduction"
+    {
+      title: "Scholarship not credited",
+      story:
+        "My scholarship amount is not credited even after 4 months. My classmates already received it."
+    },
+    {
+      title: "Wrong late fee added",
+      story:
+        "System added late fee even though I paid before due date. Please verify transaction."
+    }
+  ],
+  Facilities: [
+    {
+      title: "Water cooler not working",
+      story:
+        "Water cooler in Block B 3rd floor is not working since one week. Students are facing problem."
+    }
+  ],
+  Library: [
+    {
+      title: "Library access blocked",
+      story:
+        "My ID card shows blocked in library system though I returned all books."
+    }
   ]
 };
 
-/* ===== FOLLOW-UP CHAT MESSAGES ===== */
-const followUps = issueMap;
+/* ================= GENERATE PROFESSIONAL QUERIES ================= */
+const generateQueries = () => {
+  let id = 1;
+  const arr = [];
 
-/* ===== GENERATE 50–75 DYNAMIC QUERIES ===== */
-const generateQueries = (num = 60) => {
-  const queries = [];
-  for (let i = 1; i <= num; i++) {
-    const roleRand = Math.random();
-    let userRole = "student",
-      userName = STUDENTS[Math.floor(Math.random() * STUDENTS.length)];
-    if (roleRand > 0.7) {
-      userRole = "faculty";
-      userName = FACULTY[Math.floor(Math.random() * FACULTY.length)];
-    } else if (roleRand > 0.9) {
-      userRole = "central";
-      userName = CENTRAL[Math.floor(Math.random() * CENTRAL.length)];
-    }
+  Object.keys(issueMap).forEach((cat) => {
+    issueMap[cat].forEach((issue) => {
+      const userName = STUDENTS[Math.floor(Math.random() * STUDENTS.length)];
 
-    const category = categories[Math.floor(Math.random() * categories.length)];
-    const issue = issueMap[category][Math.floor(Math.random() * issueMap[category].length)];
-
-    queries.push({
-      id: i,
-      title: `Query #${i}: ${category}`,
-      category,
-      priority: priorities[Math.floor(Math.random() * priorities.length)],
-      status: ["Pending", "In Progress", "Resolved"][Math.floor(Math.random() * 3)],
-      desc: `${userName} reports: ${issue}`,
-      userRole,
-      userName,
-      createdAt: new Date(Date.now() - Math.random() * 1000000000).toISOString(),
-      messages: [
-        {
-          from: userName,
-          text: `Hello Admin, ${issue}`,
-          time: new Date().toLocaleTimeString(),
-        },
-      ],
+      arr.push({
+        id: id++,
+        title: issue.title,
+        category: cat,
+        priority: ["High", "Medium", "Low"][Math.floor(Math.random() * 3)],
+        status: "Pending",
+        desc: issue.story,
+        userRole: "student",
+        userName,
+        createdAt: new Date().toISOString(),
+        messages: [
+          {
+            from: userName,
+            text: issue.story,
+            time: new Date().toLocaleTimeString()
+          }
+        ]
+      });
     });
-  }
-  return queries;
+  });
+
+  return arr;
 };
 
 export default function CampusDashboard() {
   const [queries, setQueries] = useState(
-    () => JSON.parse(localStorage.getItem("campus_queries")) || generateQueries(60)
+    () => JSON.parse(localStorage.getItem("campus_queries_v2")) || generateQueries()
   );
   const [selectedQuery, setSelectedQuery] = useState(null);
   const [chatMessage, setChatMessage] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
+  const [userTyping, setUserTyping] = useState(false);
+
   const confRef = useRef(null);
   const chatEndRef = useRef(null);
 
-  /* ===== SAVE TO LOCAL STORAGE ===== */
+  /* ================= SAVE ================= */
   useEffect(() => {
-    localStorage.setItem("campus_queries", JSON.stringify(queries));
+    localStorage.setItem("campus_queries_v2", JSON.stringify(queries));
   }, [queries]);
 
-  /* ===== AUTO SCROLL CHAT ===== */
+  /* ================= AUTOSCROLL ================= */
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [selectedQuery, queries]);
+  }, [selectedQuery, queries, userTyping]);
 
-  /* ===== USER REAL-TIME FOLLOW-UP MESSAGE SIMULATION ===== */
+  /* ================= SMART FOLLOW-UP (ONCE) ================= */
   useEffect(() => {
     if (!selectedQuery) return;
 
-    const interval = setInterval(() => {
-      const msgs = followUps[selectedQuery.category];
-      const randomMsg = msgs[Math.floor(Math.random() * msgs.length)];
+    const timeout = setTimeout(() => {
+      setUserTyping(true);
 
-      const msg = {
-        from: selectedQuery.userName,
-        text: randomMsg,
-        time: new Date().toLocaleTimeString(),
-      };
+      setTimeout(() => {
+        const msg = {
+          from: selectedQuery.userName,
+          text: "Sir, any update on this? This is becoming urgent for me.",
+          time: new Date().toLocaleTimeString()
+        };
 
-      setQueries((prev) =>
-        prev.map((q) =>
-          q.id === selectedQuery.id ? { ...q, messages: [...q.messages, msg] } : q
-        )
-      );
-    }, 9000);
+        setQueries((prev) =>
+          prev.map((q) =>
+            q.id === selectedQuery.id
+              ? { ...q, messages: [...q.messages, msg] }
+              : q
+          )
+        );
 
-    return () => clearInterval(interval);
+        setUserTyping(false);
+      }, 3000);
+    }, 20000);
+
+    return () => clearTimeout(timeout);
   }, [selectedQuery]);
 
-  /* ===== CONFETTI ===== */
+  /* ================= CONFETTI ================= */
   const spawnConfetti = (container, n = 40) => {
     if (!container) return;
-    const colors = ["#FF3B30", "#FF9500", "#FFCC00", "#34C759", "#5AC8FA", "#5856D6"];
+    const colors = ["#22c55e", "#3b82f6", "#f97316", "#a855f7"];
     for (let i = 0; i < n; i++) {
       const el = document.createElement("div");
       el.className = "ap-conf";
@@ -162,133 +141,172 @@ export default function CampusDashboard() {
       el.style.width = 6 + Math.random() * 10 + "px";
       el.style.height = 8 + Math.random() * 14 + "px";
       container.appendChild(el);
-      setTimeout(() => el.remove(), 3500 + Math.random() * 1000);
+      setTimeout(() => el.remove(), 3500);
     }
   };
 
-  /* ===== STATUS UPDATE ===== */
+  /* ================= STATUS UPDATE ================= */
   const updateStatus = (q, status) => {
-    setQueries((prev) => prev.map((x) => (x.id === q.id ? { ...x, status } : x)));
-    spawnConfetti(confRef.current, 30);
+    setQueries((prev) =>
+      prev.map((x) => (x.id === q.id ? { ...x, status } : x))
+    );
+    if (status === "Resolved") spawnConfetti(confRef.current, 40);
   };
 
-  /* ===== ADMIN SEND MESSAGE ===== */
+  /* ================= SEND MESSAGE ================= */
   const sendMessage = () => {
     if (!chatMessage.trim() || !selectedQuery) return;
 
-    const msg = {
+    const adminMsg = {
       from: "Admin",
       text: chatMessage,
-      time: new Date().toLocaleTimeString(),
+      time: new Date().toLocaleTimeString()
     };
 
     setQueries((prev) =>
       prev.map((q) =>
-        q.id === selectedQuery.id ? { ...q, messages: [...q.messages, msg] } : q
+        q.id === selectedQuery.id
+          ? {
+              ...q,
+              status: "In Progress",
+              messages: [...q.messages, adminMsg]
+            }
+          : q
       )
     );
 
     setChatMessage("");
+
+    // System reply
+    setTimeout(() => {
+      const sys = {
+        from: "System",
+        text:
+          "Your complaint is forwarded to the concerned department. You will be updated shortly.",
+        time: new Date().toLocaleTimeString()
+      };
+
+      setQueries((prev) =>
+        prev.map((q) =>
+          q.id === selectedQuery.id
+            ? { ...q, messages: [...q.messages, sys] }
+            : q
+        )
+      );
+    }, 1500);
   };
 
-  /* ===== ANALYTICS ===== */
+  /* ================= ANALYTICS ================= */
   const total = queries.length;
   const pending = queries.filter((q) => q.status === "Pending").length;
   const inProgress = queries.filter((q) => q.status === "In Progress").length;
   const resolved = queries.filter((q) => q.status === "Resolved").length;
-  const studentsCount = queries.filter((q) => q.userRole === "student").length;
-  const facultyCount = queries.filter((q) => q.userRole === "faculty").length;
-  const centralCount = queries.filter((q) => q.userRole === "central").length;
 
   return (
     <div className="campus-root">
-      <div className="campus-header">
-        <h2>Campus Query Dashboard</h2>
-      </div>
+      <h2>🎓 Smart Campus Grievance Dashboard</h2>
 
-      {/* ===== ANALYTICS CARDS ===== */}
       <div className="campus-analytics">
-        <div className="card">Total<br/><strong>{total}</strong></div>
-        <div className="card pending">Pending<br/><strong>{pending}</strong></div>
-        <div className="card inprogress">In Progress<br/><strong>{inProgress}</strong></div>
-        <div className="card resolved">Resolved<br/><strong>{resolved}</strong></div>
-        <div className="card student">Students<br/><strong>{studentsCount}</strong></div>
-        <div className="card faculty">Faculty<br/><strong>{facultyCount}</strong></div>
-        <div className="card central">Central Team<br/><strong>{centralCount}</strong></div>
+        <div className="card">Total<br />{total}</div>
+        <div className="card">Pending<br />{pending}</div>
+        <div className="card">In Progress<br />{inProgress}</div>
+        <div className="card">Resolved<br />{resolved}</div>
       </div>
 
-      {/* ===== MAIN LAYOUT ===== */}
       <div className="campus-main">
-
-        {/* ===== QUERY LIST ===== */}
+        {/* LEFT */}
         <div className="campus-left">
-          <h3>All Queries</h3>
-
           {queries.map((q) => (
-            <div key={q.id} className={`query-card ${q.priority.toLowerCase()}`}>
-              <div className="query-header">
-                <h4>{q.title}</h4>
-                <span>{q.status}</span>
-              </div>
-              <small>
-                {q.userRole} • {q.userName} • {q.createdAt.slice(0, 10)}
-              </small>
+            <div key={q.id} className="query-card">
+              <h4>{q.title}</h4>
+              <small>{q.userName} • {q.category}</small>
               <p>{q.desc}</p>
 
               <button onClick={() => { setSelectedQuery(q); setChatOpen(true); }}>
                 Open Chat
               </button>
 
-              <div className="query-actions">
-                <select value={q.status} onChange={(e) => updateStatus(q, e.target.value)}>
-                  <option>Pending</option>
-                  <option>In Progress</option>
-                  <option>Resolved</option>
-                </select>
-              </div>
+              <select value={q.status} onChange={(e) => updateStatus(q, e.target.value)}>
+                <option>Pending</option>
+                <option>In Progress</option>
+                <option>Resolved</option>
+              </select>
             </div>
           ))}
         </div>
 
-        {/* ===== CHAT PANEL ===== */}
-        <div className={`campus-right ${chatOpen ? "open" : "closed"}`}>
+        {/* RIGHT CHAT */}
+        <div className="campus-right">
           {selectedQuery && chatOpen ? (
-            <div className="chat-panel">
-              <div className="chat-header">
-                Chat with {selectedQuery.userName}
-                <button className="chat-close" onClick={() => setChatOpen(false)}>✖</button>
-              </div>
+            <>
+              <h3>Chat with {selectedQuery.userName}</h3>
 
               <div className="chat-box">
                 {selectedQuery.messages.map((m, i) => (
-                  <div key={i} className={`msg ${m.from === "Admin" ? "self" : "other"}`}>
-                    <strong>{m.from}</strong>: {m.text} <small>{m.time}</small>
+                  <div key={i} className={`msg-bubble ${m.from === "Admin" || m.from === "System" ? "admin" : "user"}`}>
+                    <div className="msg-author">{m.from}</div>
+                    <div>{m.text}</div>
+                    <div className="msg-time">{m.time}</div>
                   </div>
                 ))}
+
+                {userTyping && (
+                  <div className="typing-indicator">
+                    {selectedQuery.userName} is typing...
+                  </div>
+                )}
+
                 <div ref={chatEndRef}></div>
               </div>
 
               <div className="chat-input">
                 <input
-                  placeholder="Type message..."
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
+                  placeholder="Type reply..."
+                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                 />
                 <button onClick={sendMessage}>Send</button>
               </div>
-            </div>
+            </>
           ) : (
-            <p>Select a query to chat</p>
+            <p>Select a complaint to open chat</p>
           )}
         </div>
       </div>
 
-      {/* CONFETTI */}
       <div ref={confRef} className="confetti-wrap" />
+
+      {/* ================= STYLE ================= */}
+      <style>{`
+      body { background:#0f172a; color:white; font-family:Segoe UI; }
+      .campus-root{ padding:20px; }
+      .campus-analytics{ display:flex; gap:10px; }
+      .card{ background:#020617; padding:15px; border-radius:10px; min-width:120px; text-align:center; }
+      .campus-main{ display:flex; gap:10px; margin-top:20px; }
+      .campus-left{ width:50%; max-height:75vh; overflow:auto; }
+      .campus-right{ width:50%; background:#020617; border-radius:10px; padding:10px; }
+      .query-card{ background:#020617; margin-bottom:10px; padding:12px; border-radius:10px; }
+      .query-card button{ margin-right:10px; }
+
+      .chat-box{ height:400px; overflow:auto; display:flex; flex-direction:column; }
+      .msg-bubble{ max-width:70%; margin:6px; padding:10px; border-radius:12px; }
+      .msg-bubble.user{ background:#1e40af; align-self:flex-start; }
+      .msg-bubble.admin{ background:#166534; align-self:flex-end; }
+      .msg-author{ font-size:12px; opacity:0.7; }
+      .msg-time{ font-size:10px; opacity:0.6; text-align:right; }
+      .chat-input{ display:flex; gap:10px; }
+      .chat-input input{ flex:1; padding:10px; border-radius:8px; }
+      .typing-indicator{ font-style:italic; opacity:0.7; margin:5px; }
+
+      .confetti-wrap{ position:fixed; inset:0; pointer-events:none; }
+      .ap-conf{ position:absolute; top:-10px; animation: fall 3s linear; }
+      @keyframes fall{ to{ transform:translateY(100vh) rotate(360deg); } }
+      `}</style>
     </div>
   );
 }
+
 
 
 

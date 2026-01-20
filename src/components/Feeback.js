@@ -4,7 +4,6 @@ import {
   BarChart, Bar, XAxis, YAxis
 } from "recharts";
 
-
 /* ================= CONFIG ================= */
 const faculty_ids = Array.from({ length: 20 }, (_, i) => `F${100 + i}`);
 
@@ -31,7 +30,6 @@ const rand = (min, max) =>
 const FacultyFeedbackEngine = () => {
   const [selectedFaculty, setSelectedFaculty] = useState(null);
 
-  /* -------- DATA SIMULATION (AI OUTPUT) -------- */
   const facultyData = useMemo(() => {
     return faculty_ids.map(fid => {
       let domainScores = {};
@@ -53,101 +51,106 @@ const FacultyFeedbackEngine = () => {
     });
   }, []);
 
-  /* -------- PIE DATA -------- */
   const pieData = facultyData.map(f => ({
     name: f.faculty_id,
     value: f.avgScore,
   }));
 
-  /* -------- SUGGESTIONS (PYTHON faculty_suggestions) -------- */
   const getSuggestions = faculty => {
     const weak = Object.entries(faculty.domainScores)
       .filter(([_, v]) => v < 3.0)
       .map(([k]) => k.replace(/_/g, " "));
 
     return weak.length === 0
-      ? ["✔ No improvement required. Faculty performing well."]
-      : weak.map(w => `⚠ ${w} needs improvement`);
+      ? ["✔ Outstanding performance. Keep it up!"]
+      : weak.map(w => `⚠ Improve ${w}`);
   };
 
   return (
-    <div className="ffe-container">
-      <h1>📊 Faculty Feedback Engine</h1>
+    <>
+      {/* ================= CSS INSIDE SAME FILE ================= */}
+    
 
-      {/* ========== PIE CHART ========== */}
-      <div style={{ height: 320 }}>
-        <ResponsiveContainer>
-          <PieChart>
-            <Pie
-              data={pieData}
-              dataKey="value"
-              nameKey="name"
-              outerRadius={120}
-              onClick={(_, index) =>
-                setSelectedFaculty(facultyData[index])
-              }
-            >
-              {pieData.map((_, i) => (
-                <Cell key={i} fill={`hsl(${i * 18},70%,55%)`} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
+      <div className="ffe-container">
+        <h1>📊 Faculty Feedback Intelligence Engine</h1>
 
-        <p style={{ textAlign: "center", opacity: 0.8 }}>
-          👉 Click on any faculty to view complete analysis report
-        </p>
-      </div>
-
-      {/* ========== DETAILED FACULTY REPORT ========== */}
-      {selectedFaculty && (
-        <div className="explain-panel">
-          <h2>🧑‍🏫 Faculty Analysis Report</h2>
-
-          <p><b>Faculty ID:</b> {selectedFaculty.faculty_id}</p>
-          <p><b>Subject:</b> {selectedFaculty.subject}</p>
-
-          <p>
-            😊 {selectedFaculty.positive}% &nbsp;
-            😐 {selectedFaculty.neutral}% &nbsp;
-            ☹ {selectedFaculty.negative}%
-          </p>
-
-          <h3>📌 Domain-wise Performance</h3>
-
-          <div style={{ width: "100%", height: 220 }}>
-            <ResponsiveContainer>
-              <BarChart
-                data={Object.entries(selectedFaculty.domainScores).map(
-                  ([k, v]) => ({ domain: k, score: v })
-                )}
+        {/* PIE */}
+        <div className="chart-card" style={{ height:1040 }}>
+          <ResponsiveContainer>
+            <PieChart>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                outerRadius={420}
+                onClick={(_, index) =>
+                  setSelectedFaculty(facultyData[index])
+                }
               >
-                <XAxis dataKey="domain" hide />
-                <YAxis domain={[0, 5]} />
-                <Tooltip />
-                <Bar dataKey="score" fill="#38bdf8" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+                {pieData.map((_, i) => (
+                  <Cell key={i} fill={`hsl(${i * 18},70%,55%)`} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
 
-          <h3>⚠ Improvement Suggestions</h3>
-          <ul>
-            {getSuggestions(selectedFaculty).map((s, i) => (
-              <li key={i}>{s}</li>
-            ))}
-          </ul>
-
-          <h3>🏆 Overall Score: {selectedFaculty.avgScore}</h3>
-
-          <button onClick={() => setSelectedFaculty(null)}>
-            Close Report
-          </button>
+          <p className="hint">
+            👉 Click on any radius  to view AI-generated report on Faculty Feedback
+          </p>
         </div>
-      )}
-    </div>
+
+        {/* DETAIL */}
+        {selectedFaculty && (
+          <div className="explain-panel">
+            <h2>🧑‍🏫 Faculty Performance Report</h2>
+
+            <p><b>ID:</b> {selectedFaculty.faculty_id}</p>
+            <p><b>Subject:</b> {selectedFaculty.subject}</p>
+
+            <div className="stats">
+              😊 {selectedFaculty.positive}% &nbsp;
+              😐 {selectedFaculty.neutral}% &nbsp;
+              ☹ {selectedFaculty.negative}%
+            </div>
+
+            <h3>📌 Domain Performance</h3>
+            <div style={{ width: "200%", height: 320 }}>
+              <ResponsiveContainer>
+                <BarChart
+                  data={Object.entries(selectedFaculty.domainScores).map(
+                    ([k, v]) => ({ domain: k, score: v })
+                  )}
+                >
+                  <XAxis dataKey="domain" hide />
+                  <YAxis domain={[0, 5]} />
+                  <Tooltip />
+                  <Bar dataKey="score" fill="#38bdf8" radius={[8,8,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <h3>⚠ AI Suggestions</h3>
+            <ul>
+              {getSuggestions(selectedFaculty).map((s, i) => (
+                <li key={i}>{s}</li>
+              ))}
+            </ul>
+
+            <div className="score">
+              🏆 Overall Score: {selectedFaculty.avgScore}
+            </div>
+
+            <button onClick={() => setSelectedFaculty(null)}>
+              Close Report
+            </button>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
 export default FacultyFeedbackEngine;
+
 

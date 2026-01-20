@@ -748,8 +748,7 @@ const AIApp = () => {
             <div className="description-box">
               <h3>Description / Details</h3>
               <p className="description-hint">
-                Ee place lo actual matter rayandi – event details, reason, special
-                instructions. Idhi template kinda final PDF lo merge avthundi.
+.
               </p>
               <textarea
                 className="description-input"

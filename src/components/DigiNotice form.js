@@ -81,7 +81,7 @@ export default function AdiripoNotice(){
       {/* Navbar */}
       <div className="ad-nav">
         <button className="ad-home" onClick={()=>window.location.href="/"}>← Home</button>
-        <div className="ad-title">VISTAR NETRA — Digital Notice Board</div>
+        <div className="ad-title">Digital Notice Board</div>
         <div className="ad-actions">
        
           <button className="ad-toggle" onClick={()=>setAdmin(a=>!a)}>{admin?"Switch to User":"Switch to Admin Panel"}</button>

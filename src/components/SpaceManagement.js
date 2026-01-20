@@ -1,11 +1,4 @@
-import React, { useState } from "react";
-
-/*
-===========================================================
-SMART SPACE MANAGEMENT – ADVANCED SINGLE FILE FRONTEND
-Correct • Complex • Backend-Ready • Final-Year Level
-===========================================================
-*/
+import React, { useState, useRef, useEffect } from "react";
 
 export default function AdminDashboard() {
 
@@ -22,9 +15,7 @@ export default function AdminDashboard() {
   const [doorDraft, setDoorDraft] = useState({ side: "left", pos: "" });
 
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [imageUrl, setImageUrl] = useState(null);
+  const canvasRef = useRef(null);
 
   /* ---------------- HANDLERS ---------------- */
   const handleChange = (e) =>
@@ -53,37 +44,24 @@ export default function AdminDashboard() {
   /* ---------------- GENERATE ---------------- */
   const generatePlan = () => {
     if (!validate()) return;
+    alert("✅ Seating layout generated! See right side preview.");
+  };
 
-    setLoading(true);
-    setImageUrl(null);
-    setProgress(0);
+  /* ---------------- DOWNLOAD ---------------- */
+  const downloadLayout = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const interval = setInterval(() => {
-      setProgress((p) => (p < 95 ? p + 5 : p));
-    }, 120);
-
-    /* 🔮 BACKEND READY (FastAPI / Flask)
-    fetch("http://localhost:5000/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, doors })
-    })
-      .then(res => res.json())
-      .then(data => setImageUrl(data.image_url));
-    */
-
-    setTimeout(() => {
-      clearInterval(interval);
-      setProgress(100);
-      setImageUrl("/classroom_seating.png");
-      setLoading(false);
-    }, 2200);
+    const link = document.createElement("a");
+    link.download = "classroom_seating_plan.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
   };
 
   /* ---------------- UI ---------------- */
   return (
     <div style={S.page}>
-      <h1 style={S.title}>🏫 Smart Space Management (AI-Driven)</h1>
+      <h1 style={S.title}>🏫 Smart Space Management (2D Seating Planner)</h1>
 
       <div style={S.grid}>
 
@@ -108,7 +86,6 @@ export default function AdminDashboard() {
           />
 
           <Select
-            label="Seating Type"
             name="seatType"
             value={form.seatType}
             onChange={handleChange}
@@ -124,7 +101,6 @@ export default function AdminDashboard() {
           />
 
           <Select
-            label="Board Position"
             name="boardSide"
             value={form.boardSide}
             onChange={handleChange}
@@ -173,39 +149,104 @@ export default function AdminDashboard() {
 
         {/* RIGHT PANEL */}
         <div style={S.panel}>
-          <h2>📊 Generation Output</h2>
+          <h2>📊 2D Layout Preview</h2>
 
-          {loading && (
-            <>
-              <p>AI Optimizing Layout…</p>
-              <div style={S.progressBar}>
-                <div style={{ ...S.progressFill, width: `${progress}%` }} />
-              </div>
-            </>
-          )}
+          <Simple2DView form={form} doors={doors} canvasRef={canvasRef} />
 
-          {imageUrl && (
-            <>
-              <img src={imageUrl} alt="Seating Plan" style={S.image} />
+          <button style={S.downloadBtn} onClick={downloadLayout}>
+            ⬇ Download Seating Plan
+          </button>
 
-              <a href={imageUrl} download>
-                <button style={S.downloadBtn}>⬇ Download Layout</button>
-              </a>
-
-              <div style={S.summary}>
-                <h3>📌 Layout Summary</h3>
-                <p>Students: {form.students}</p>
-                <p>Seat Type: {form.seatType}</p>
-                <p>Board Side: {form.boardSide}</p>
-                <p>Doors: {doors.length}</p>
-              </div>
-            </>
-          )}
         </div>
       </div>
     </div>
   );
 }
+
+/* ---------------- 2D CANVAS ---------------- */
+const Simple2DView = ({ form, doors, canvasRef }) => {
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    const W = canvas.width;
+    const H = canvas.height;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Background
+    ctx.fillStyle = "#020617";
+    ctx.fillRect(0, 0, W, H);
+
+    // Room
+    ctx.strokeStyle = "#38bdf8";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(40, 40, W - 80, H - 80);
+
+    // Board
+    ctx.fillStyle = "#22c55e";
+    if (form.boardSide === "top") ctx.fillRect(W / 2 - 80, 30, 160, 8);
+    if (form.boardSide === "bottom") ctx.fillRect(W / 2 - 80, H - 38, 160, 8);
+    if (form.boardSide === "left") ctx.fillRect(30, H / 2 - 80, 8, 160);
+    if (form.boardSide === "right") ctx.fillRect(W - 38, H / 2 - 80, 8, 160);
+
+    // Seats
+    const students = Number(form.students || 0);
+    if (students > 0) {
+      const cols = Math.ceil(Math.sqrt(students));
+      const rows = Math.ceil(students / cols);
+
+      const areaW = W - 120;
+      const areaH = H - 120;
+
+      const seatW = areaW / cols;
+      const seatH = areaH / rows;
+
+      let count = 0;
+      ctx.fillStyle = "#facc15";
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (count >= students) break;
+          ctx.fillRect(
+            60 + c * seatW + 4,
+            60 + r * seatH + 4,
+            seatW - 8,
+            seatH - 8
+          );
+          count++;
+        }
+      }
+    }
+
+    // Doors
+    ctx.fillStyle = "#fb7185";
+    doors.forEach((d) => {
+      const pos = parseFloat(d.pos || 0) * 5;
+      if (d.side === "left") ctx.fillRect(36, 60 + pos, 8, 40);
+      if (d.side === "right") ctx.fillRect(W - 44, 60 + pos, 8, 40);
+      if (d.side === "top") ctx.fillRect(60 + pos, 36, 40, 8);
+      if (d.side === "bottom") ctx.fillRect(60 + pos, H - 44, 40, 8);
+    });
+
+  }, [form, doors, canvasRef]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={700}
+      height={500}
+      style={{
+        width: "100%",
+        borderRadius: "12px",
+        border: "2px solid #38bdf8",
+        background: "#020617"
+      }}
+    />
+  );
+};
 
 /* ---------------- SMALL COMPONENTS ---------------- */
 const Input = ({ label, error, ...props }) => (
@@ -215,7 +256,7 @@ const Input = ({ label, error, ...props }) => (
   </>
 );
 
-const Select = ({ label, options, ...props }) => (
+const Select = ({ options, ...props }) => (
   <select style={S.input} {...props}>
     {options.map(o => (
       <option key={o} value={o}>{o}</option>
@@ -226,44 +267,43 @@ const Select = ({ label, options, ...props }) => (
 /* ---------------- STYLES ---------------- */
 const S = {
   page: {
-    minHeight: "200vh",
-    padding: "140px",
-    color: "#b41132ff",
+    minHeight: "100vh",
+    padding: "40px",
+    background: "linear-gradient(135deg,#020617,#0f172a)",
+    color: "#e5e7eb",
     fontFamily: "Poppins, Segoe UI",
   },
   title: {
     textAlign: "center",
-    marginBottom: "230px",
-    color: "#24a826ff",
+    marginBottom: "30px",
+    color: "#38bdf8",
   },
   grid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: "130px",
+    gap: "30px",
   },
   panel: {
-    padding: "44px",
-    borderRadius: "38px",
-    background: "rgba(255,255,255,0.08)",
-    boxShadow: "0 15px 40px rgba(0,0,0,0.6)",
+    padding: "24px",
+    borderRadius: "18px",
+    background: "rgba(255,255,255,0.05)",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
   },
   input: {
     width: "100%",
-    padding: "62px",
-    fontSize: "53px",
+    padding: "12px",
+    fontSize: "56px",
     marginBottom: "10px",
-    borderRadius: "10px",
+    borderRadius: "8px",
     border: "none",
   },
   row: {
     display: "flex",
     gap: "8px",
-    fontSize: "53px",
   },
   smallBtn: {
     padding: "10px 14px",
     borderRadius: "8px",
-    fontSize: "53px",
     cursor: "pointer",
   },
   mainBtn: {
@@ -276,35 +316,17 @@ const S = {
     background: "linear-gradient(90deg,#3b82f6,#06b6d4)",
     color: "#fff",
     cursor: "pointer",
-    fontSize: "53px",
-  },
-  progressBar: {
-    height: "6px",
-    background: "#1e293b",
-    borderRadius: "4px",
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    background: "linear-gradient(90deg,#60a5fa,#22d3ee)",
-    transition: "width 0.3s",
-  },
-  image: {
-    width: "100%",
-    marginTop: "12px",
-    borderRadius: "12px",
   },
   downloadBtn: {
-    marginTop: "12px",
-    padding: "10px 16px",
+    marginTop: "16px",
+    padding: "12px 16px",
     borderRadius: "10px",
+    border: "none",
+    background: "linear-gradient(90deg,#22c55e,#16a34a)",
+    color: "#020617",
+    fontWeight: "700",
     cursor: "pointer",
-  },
-  summary: {
-    marginTop: "14px",
-    background: "rgba(255,255,255,0.08)",
-    padding: "12px",
-    borderRadius: "10px",
+    width: "100%",
   },
   doorRow: {
     display: "flex",
@@ -320,9 +342,3 @@ const S = {
     marginBottom: "6px",
   },
 };
-
-
-
-
-
-

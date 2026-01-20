@@ -17,10 +17,14 @@ import ParentConnect from "./components/parentconnect";
 import TimetableFrontend from "./components/TimetableFrontend";
 import FacultyFeedbackEngine from "./components/Feeback";
 import  SmartInvigilatorEngine from "./components/invi";
+import SubjectsCurriculum from "./components/SubjectsCurriculum";
+
 /* ===== NEW COMPONENT ===== */
 import StudentFeeAttendanceIntelligence from "./components/Course";
 import StudentAttendanceAnalyticsEngine 
 from "./components/StudentAttendanceAnalyticsEngine";
+import AdminDashboard from "./AdminDashboard "
+
 
 
 function App() {
@@ -39,6 +43,13 @@ function App() {
         <Route path="/TimetableFrontend" element={<TimetableFrontend />} />
         <Route path="/CircuAIApp" element={<SampleUsers />} />
         <Route path="/ParentConnect" element={<ParentConnect />} />
+   <Route path="/admin-dashboard" element={<AdminDashboard />} />
+<Route path="/admin-subjects" element={<SubjectsCurriculum />} />
+
+
+
+
+
         
 <Route
           path="/student-fee-attendance"
