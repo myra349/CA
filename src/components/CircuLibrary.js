@@ -266,12 +266,11 @@ export default function CampusDashboard() {
                   placeholder="Type reply..."
                   onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                 />
-                <button onClick={sendMessage}>Send</button>
+                <button onClick={sendMessage}>➤</button>
               </div>
             </>
           ) : (
-            <p>Select a complaint to open chat</p>
-          )}
+              <p></p>      )}
         </div>
       </div>
 
@@ -279,29 +278,150 @@ export default function CampusDashboard() {
 
       {/* ================= STYLE ================= */}
       <style>{`
-      body { background:#0f172a; color:white; font-family:Segoe UI; }
-      .campus-root{ padding:20px; }
-      .campus-analytics{ display:flex; gap:10px; }
-      .card{ background:#020617; padding:15px; border-radius:10px; min-width:120px; text-align:center; }
-      .campus-main{ display:flex; gap:10px; margin-top:20px; }
-      .campus-left{ width:50%; max-height:75vh; overflow:auto; }
-      .campus-right{ width:50%; background:#020617; border-radius:10px; padding:10px; }
-      .query-card{ background:#020617; margin-bottom:10px; padding:12px; border-radius:10px; }
-      .query-card button{ margin-right:10px; }
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(180deg, #0f172a, #020617);
+  color: #051942;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: 40px;
+  line-height: 1.6;
+}
+/* ================= HEADINGS ================= */
+h2{ font-size:78px; margin-bottom:10px; }
+h3{ font-size:60px; margin-bottom:10px; }
+h4{ font-size:38px; margin-bottom:14px; }
 
-      .chat-box{ height:400px; overflow:auto; display:flex; flex-direction:column; }
-      .msg-bubble{ max-width:70%; margin:6px; padding:10px; border-radius:12px; }
-      .msg-bubble.user{ background:#1e40af; align-self:flex-start; }
-      .msg-bubble.admin{ background:#166534; align-self:flex-end; }
-      .msg-author{ font-size:12px; opacity:0.7; }
-      .msg-time{ font-size:10px; opacity:0.6; text-align:right; }
-      .chat-input{ display:flex; gap:10px; }
-      .chat-input input{ flex:1; padding:10px; border-radius:8px; }
-      .typing-indicator{ font-style:italic; opacity:0.7; margin:5px; }
+/* ================= LAYOUT ================= */
+.campus-root{ padding:20px; }
 
-      .confetti-wrap{ position:fixed; inset:0; pointer-events:none; }
-      .ap-conf{ position:absolute; top:-10px; animation: fall 3s linear; }
-      @keyframes fall{ to{ transform:translateY(100vh) rotate(360deg); } }
+.campus-analytics{ display:flex; gap:10px; }
+
+/* ================= ANALYTICS CARDS ================= */
+.card{ 
+  background:#020617; 
+  padding:15px; 
+  border-radius:10px; 
+  min-width:140px; 
+  font-size:48px; 
+  text-align:center; 
+  font-weight:600;
+}
+
+/* ================= MAIN ================= */
+.campus-main{ display:flex; gap:10px; margin-top:20px; }
+
+.campus-left{ width:50%; max-height:75vh; overflow:auto; }
+.campus-right{ width:50%; background:#020617; border-radius:10px; padding:10px; }
+
+/* ================= QUERY CARD ================= */
+.query-card{ 
+  background:#020617; 
+  margin-bottom:12px; 
+  font-size:45px;
+  padding:14px; 
+  border-radius:10px; 
+  transition:0.2s;
+}
+
+.query-card:hover{
+  transform: scale(1.01);
+  box-shadow:0 0 10px rgba(59,130,246,0.4);
+}
+
+.query-card p{
+  font-size:55px;
+  color:white;
+  opacity:0.9;
+}
+
+.query-card small{
+  font-size:40px;
+  opacity:0.7;
+}
+
+/* ================= BUTTONS ================= */
+button{
+  background:green;
+  border:none;
+  color:white;
+  padding:18px 12px;
+  border-radius:20px;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#1d4ed8;
+}
+
+/* ================= CHAT ================= */
+.chat-box{ 
+  height:1500px; 
+  overflow:auto; 
+  display:flex; 
+  flex-direction:column; 
+  padding:10px;
+}
+
+/* ================= MESSAGE BUBBLES ================= */
+.msg-bubble{ 
+  max-width:70%; 
+  margin:6px; 
+  padding:10px 12px; 
+  border-radius:12px; 
+  font-size:46px;
+}
+
+.msg-bubble.user{ 
+  background:#1e40af; 
+  align-self:flex-start; 
+}
+
+.msg-bubble.admin{ 
+  background:#166534; 
+  align-self:flex-end; 
+}
+
+/* ================= MESSAGE META ================= */
+.msg-author{ 
+  font-size:43x; 
+  opacity:0.7; 
+  margin-bottom:2px;
+}
+
+.msg-time{ 
+  font-size:40px; 
+  opacity:0.6; 
+  text-align:right; 
+}
+
+/* ================= INPUT ================= */
+.chat-input{ display:flex; gap:10px; margin-top:10px; }
+
+.chat-input input{ 
+  flex:1; 
+  padding:25px; 
+  border-radius:8px; 
+  font-size:50px;
+}
+
+/* ================= TYPING ================= */
+.typing-indicator{ 
+  font-style:italic; 
+  opacity:0.8; 
+  margin:5px; 
+  font-size:40px;
+}
+
+/* ================= CONFETTI ================= */
+.confetti-wrap{ position:fixed; inset:0; pointer-events:none; }
+
+.ap-conf{ position:absolute; top:-10px; animation: fall 3s linear; }
+
+@keyframes fall{ 
+  to{ transform:translateY(100vh) rotate(360deg); } 
+}
+
       `}</style>
     </div>
   );

@@ -1,351 +1,367 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useMemo } from "react";
 import jsPDF from "jspdf";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell
+} from "recharts";
 
 /* ================= DATA ================= */
 const facultyNames = [
   "Dr. Ramesh Kumar","Dr. Suresh Rao","Dr. Anil Sharma","Dr. Kiran Patel","Dr. Venkatesh Naidu",
   "Dr. Mahesh Reddy","Dr. Sunitha Devi","Dr. Prakash Mehta","Dr. Ravi Teja","Dr. Sumanth Varma",
   "Dr. Lakshmi Narayana","Dr. Harsha Vardhan","Dr. Pooja Singh","Dr. Nikhil Jain","Dr. Aparna Iyer",
-  "Dr. Naveen Chandra","Dr. Priya Malhotra","Dr. Arjun Verma","Dr. Sneha Kulkarni","Dr. Rohit Agarwal",
-  "Dr. Deepak Mishra","Dr. Kavitha Rao","Dr. Sanjay Gupta","Dr. Meena Iyer","Dr. Karthik Subramaniam",
-  "Dr. Anusha Reddy","Dr. Vikram Singh","Dr. Bhavya Shah","Dr. Sateesh Babu","Dr. Neha Kapoor"
+  "Dr. Naveen Chandra","Dr. Priya Malhotra","Dr. Arjun Verma","Dr. Sneha Kulkarni","Dr. Rohit Agarwal"
 ];
 
-/* ================= INITIAL FACULTY ================= */
-const initialFaculty = facultyNames.map((name, i) => ({
-  id: `T${i + 1}`,
+const facultyInit = facultyNames.map((name, i) => ({
+  id: "T" + (i + 1),
   name,
 }));
 
-/* ================= ROOMS ================= */
-const rooms = Array.from({ length: 60 }, (_, i) => `Room ${101 + i}`);
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+const ROOMS = Array.from({ length: 20 }, (_, i) => ({
+  id: "R" + (i + 1),
+  name: "Room " + (101 + i),
+  required: i % 5 === 0 ? 3 : 2,
+}));
 
 /* ================= COMPONENT ================= */
-const SmartInvigilatorEngine = () => {
-  const [facultyList, setFacultyList] = useState(initialFaculty);
-  const [newFaculty, setNewFaculty] = useState("");
-  const [day, setDay] = useState("Mon");
+export default function SmartInvigilatorEngine() {
+
+  const [faculty] = useState(facultyInit);
+
+  const [allocations, setAllocations] = useState(() => {
+    const obj = {};
+    ROOMS.forEach(r => (obj[r.id] = []));
+    return obj;
+  });
+
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
 
-  /* ===== Allocation ===== */
-  const allocation = useMemo(() => {
-    let index = DAYS.indexOf(day) * 2;
-    return rooms.map(room => {
-      const assigned = [];
-      for (let i = 0; i < 2; i++) {
-        if (facultyList[index]) {
-          assigned.push({
-            ...facultyList[index],
-            session: i === 0 ? "Morning" : "Afternoon",
-          });
-          index++;
-        }
-      }
-      return { room, teachers: assigned };
-    });
-  }, [facultyList, day]);
-
-  /* ===== Faculty Analysis ===== */
-  const facultyAnalysis = useMemo(() => {
+  /* ================= ANALYTICS ================= */
+  const facultyStats = useMemo(() => {
     const map = {};
-    facultyList.forEach(f => (map[f.id] = { ...f, count: 0 }));
+    faculty.forEach(f => map[f.id] = { ...f, today: 0 });
 
-    allocation.forEach(a =>
-      a.teachers.forEach(t => {
-        if (t) map[t.id].count++;
-      })
-    );
-    return Object.values(map);
-  }, [allocation, facultyList]);
-
-  /* ===== PDF ===== */
-  const downloadRoomPDF = () => {
-    const doc = new jsPDF();
-    doc.text(`Room Allocation – ${day}`, 14, 15);
-    let y = 25;
-    allocation.forEach(a => {
-      doc.text(a.room, 14, y); y += 6;
-      a.teachers.length
-        ? a.teachers.forEach(t => {
-            doc.text(`- ${t.name} (${t.session})`, 20, y);
-            y += 6;
-          })
-        : doc.text("Faculty will be replaced soon", 20, y);
-      y += 6;
-      if (y > 270) { doc.addPage(); y = 20; }
+    Object.values(allocations).forEach(list => {
+      list.forEach(fid => {
+        if (map[fid]) map[fid].today++;
+      });
     });
-    doc.save(`Room_Allocation_${day}.pdf`);
-  };
 
-  const downloadFacultyPDF = () => {
-    const doc = new jsPDF();
-    doc.text("Faculty Load Analysis", 14, 15);
-    let y = 25;
-    facultyAnalysis.forEach(f => {
-      doc.text(`${f.name} – Duties: ${f.count}`, 14, y);
-      y += 6;
-      if (y > 270) { doc.addPage(); y = 20; }
+    return Object.values(map).map(f => {
+      let risk = "Low";
+      if (f.today >= 2) risk = "High";
+      else if (f.today === 1) risk = "Medium";
+      return { ...f, risk };
     });
-    doc.save("Faculty_Load_Report.pdf");
-  };
+  }, [allocations, faculty]);
 
+  const overworked = facultyStats.filter(f => f.risk === "High");
+  const balanced = facultyStats.filter(f => f.risk === "Medium");
+  const underutilized = facultyStats.filter(f => f.risk === "Low");
+
+  /* ================= SUMMARY ================= */
+  const totalRequiredSlots = ROOMS.reduce((s, r) => s + r.required, 0);
+  const totalAssigned = Object.values(allocations).reduce((s, l) => s + l.length, 0);
+  const remainingDuties = totalRequiredSlots - totalAssigned;
+
+  /* ================= ASSIGN ================= */
+  function assignFaculty(roomId, fid) {
+    setAllocations(prev => {
+      const current = prev[roomId];
+      const room = ROOMS.find(r => r.id === roomId);
+
+      if (current.includes(fid)) return prev;
+
+      if (current.length >= room.required) {
+        alert("Room already full");
+        return prev;
+      }
+
+      return { ...prev, [roomId]: [...current, fid] };
+    });
+  }
+
+  /* ================= PDF ================= */
+  function downloadRoomsPDF() {
+    const doc = new jsPDF();
+
+    doc.setFontSize(20);
+    doc.text("SMART INVIGILATOR SYSTEM", 105, 15, { align: "center" });
+    doc.setFontSize(16);
+    doc.text("Exam Hall Allocation Report", 105, 25, { align: "center" });
+    doc.line(14, 30, 196, 30);
+
+    let y = 40;
+
+    ROOMS.forEach((r, idx) => {
+      if (y > 260) {
+        doc.addPage();
+        y = 20;
+      }
+
+      doc.setFontSize(13);
+      doc.text(`${idx + 1}. ${r.name}`, 14, y); y += 6;
+      doc.setFontSize(11);
+      doc.text(`Required Invigilators: ${r.required}`, 20, y); y += 6;
+
+      const list = allocations[r.id];
+
+      if (list.length === 0) {
+        doc.text("Assigned Faculty: NONE", 20, y); y += 8;
+      } else {
+        doc.text("Assigned Faculty:", 20, y); y += 6;
+        list.forEach((fid, i) => {
+          const f = faculty.find(x => x.id === fid);
+          doc.text(`   ${i + 1}. ${f.name}`, 24, y);
+          y += 6;
+        });
+        y += 4;
+      }
+
+      doc.line(14, y, 196, y);
+      y += 6;
+    });
+
+    doc.setFontSize(10);
+    doc.text("Generated by Smart Invigilator Allocation Engine", 105, 290, { align: "center" });
+
+    doc.save("Exam_Hall_Allocation_Report.pdf");
+  }
+
+  function downloadFacultyPDF() {
+    const doc = new jsPDF();
+
+    doc.setFontSize(20);
+    doc.text("SMART INVIGILATOR SYSTEM", 105, 15, { align: "center" });
+    doc.setFontSize(16);
+    doc.text("Faculty Workload & Utilization Report", 105, 25, { align: "center" });
+    doc.line(14, 30, 196, 30);
+
+    let y = 40;
+
+    doc.setFontSize(13);
+    doc.text("Summary:", 14, y); y += 8;
+
+    doc.setFontSize(11);
+    doc.text(`Total Faculty: ${faculty.length}`, 20, y); y += 6;
+    doc.text(`Total Required Duties: ${totalRequiredSlots}`, 20, y); y += 6;
+    doc.text(`Total Assigned Duties: ${totalAssigned}`, 20, y); y += 6;
+    doc.text(`Remaining Duties: ${remainingDuties}`, 20, y); y += 10;
+
+    doc.text(`Overloaded Faculty (High): ${overworked.length}`, 20, y); y += 6;
+    doc.text(`Balanced Faculty (Medium): ${balanced.length}`, 20, y); y += 6;
+    doc.text(`Underutilized Faculty (Low): ${underutilized.length}`, 20, y); y += 10;
+
+    doc.line(14, y, 196, y);
+    y += 10;
+
+    doc.setFontSize(13);
+    doc.text("Detailed Faculty Workload:", 14, y);
+    y += 8;
+
+    facultyStats.forEach((f, idx) => {
+      if (y > 260) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.setFontSize(11);
+      doc.text(
+        `${idx + 1}. ${f.name}  |  Duties Assigned: ${f.today}  |  Load Level: ${f.risk}`,
+        14,
+        y
+      );
+      y += 6;
+    });
+
+    doc.setFontSize(10);
+    doc.text("Generated by Smart Invigilator Allocation Engine", 105, 290, { align: "center" });
+
+    doc.save("Faculty_Workload_Analysis_Report.pdf");
+  }
+
+  /* ================= CHART DATA ================= */
+  const barData = facultyStats.map(f => ({
+    name: f.name.split(" ")[1] || f.name,
+    duties: f.today
+  }));
+
+  const pieData = [
+    { name: "Underutilized", value: underutilized.length },
+    { name: "Balanced", value: balanced.length },
+    { name: "Overloaded", value: overworked.length },
+  ];
+
+  const PIE_COLORS = ["#22c55e", "#eab308", "#ef4444"];
+
+  /* ================= UI ================= */
   return (
-    <div className="sie">
-      <h1>🛡 Smart Invigilator Allocation Dashboard</h1>
+    <div style={{
+      background: "radial-gradient(circle at top, #020617, #000)",
+      minHeight: "100vh",
+      color: "#e5e7eb",
+      padding: 30,
+      fontFamily: "Poppins, Segoe UI",
+    }}>
 
-      {/* TOP BAR */}
-      <div className="top-bar">
-        {DAYS.map(d => (
-          <button
-            key={d}
-            className={day === d ? "active" : ""}
-            onClick={() => setDay(d)}
-          >
-            {d}
-          </button>
+      <h1 style={{ textAlign: "center", fontSize: 42, marginBottom: 10 }}>
+        Smart Invigilator Allocation Engine
+      </h1>
+
+      <div style={{ textAlign: "center", marginBottom: 30 }}>
+        <button onClick={downloadRoomsPDF} style={{ marginRight: 20 }}>📄 Exam Halls PDF</button>
+        <button onClick={downloadFacultyPDF}>📊 Faculty Analysis PDF</button>
+      </div>
+
+      {/* KPI */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 20, marginBottom: 30 }}>
+        {[
+          ["Total Faculty", faculty.length],
+          ["Total Rooms", ROOMS.length],
+          ["Remaining Duties", remainingDuties],
+          ["Assigned Duties", totalAssigned],
+        ].map(([title, value]) => (
+          <div key={title} style={{
+            background: "linear-gradient(135deg,#0f172a,#020617)",
+            padding: 20, borderRadius: 16, textAlign: "center"
+          }}>
+            <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 8 }}>{title}</div>
+            <div style={{
+              fontSize: 40,
+              fontWeight: 900,
+              background: "linear-gradient(90deg,#38bdf8,#22d3ee)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent"
+            }}>{value}</div>
+          </div>
         ))}
-        <button onClick={downloadRoomPDF}>📄 EXAM HALL INFO PDF</button>
-        <button onClick={downloadFacultyPDF}>📄 FACULTY  INVILIZATION STATUS PDF</button>
       </div>
 
-      <div className="layout">
-        {/* FACULTY PANEL */}
-        <div className="faculty-panel">
-          <h2>👨‍🏫 Faculty ({facultyList.length})</h2>
+      {/* CHARTS */}
+      <div style={{ display: "flex", gap: 30, marginBottom: 40 }}>
+        <div style={{ flex: 1, background: "#04102f", padding: 20, borderRadius: 16 }}>
+        <h3 style={{
+  textAlign: "center",
+  fontSize: "42px",
+  fontWeight: "900",
+  letterSpacing: "1.5px",
+  marginBottom: "15px",
+  background: "linear-gradient(90deg, #38bdf8, #22d3ee, #a5f3fc)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  textShadow: "0 0 20px rgba(56,189,248,0.6)"
+}}>
+  📊 Faculty Workload Analysis
+</h3>
 
-          <input
-            placeholder="Add Faculty"
-            value={newFaculty}
-            onChange={e => setNewFaculty(e.target.value)}
-          />
-          <button
-            onClick={() => {
-              if (!newFaculty.trim()) return;
-              setFacultyList([
-                ...facultyList,
-                { id: `T${facultyList.length + 1}`, name: newFaculty },
-              ]);
-              setNewFaculty("");
-            }}
-          >
-            Add
-          </button>
+          <ResponsiveContainer width="100%" height={380}>
+            <BarChart data={barData}>
+              <XAxis dataKey="name" hide />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="duties" fill="#38bdf8" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
-          {facultyAnalysis.map(f => (
+        <div style={{ flex: 1, background: "#0f172a", padding: 20, borderRadius: 16 }}>
+          <h3 style={{ textAlign: "center", color: "#7dd3fc" }}>Faculty Utilization</h3>
+          <ResponsiveContainer width="100%" height={380}>
+            <PieChart>
+              <Pie data={pieData} dataKey="value" cx="50%" cy="50%" outerRadius={180} label>
+                {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* ROOMS */}
+      <h2 style={{ textAlign: "center", fontSize: 70, marginBottom: 20 }}>🏫 Exam Halls</h2>
+
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill,minmax(560px,10fr))",
+        gap: 20
+      }}>
+        {ROOMS.map(r => {
+          const filled = allocations[r.id].length;
+          const color =
+            filled === r.required ? "#16a34a" :
+            filled === 0 ? "#0ea5e9" : "#facc15";
+
+          return (
             <div
-              key={f.id}
-              className={`faculty-card ${f.count > 2 ? "over" : ""}`}
-              onClick={() => setSelectedTeacher(f)}
+              key={r.id}
+              onClick={() => setSelectedRoom(r)}
+              style={{
+                background: `linear-gradient(135deg,${color},#020617)`,
+                minHeight: 140,
+                borderRadius: 18,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                cursor: "pointer"
+              }}
             >
-              <span>{f.name}</span>
-              <span className="count">{f.count}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* ROOMS */}
-        <div className="room-panel">
-          <h2>🏫 EXAM HALL ({rooms.length})</h2>
-          <div className="room-grid">
-            {allocation.map((a, i) => (
-              <div
-                key={i}
-                className={`room-card ${a.teachers.length < 2 ? "pending" : ""}`}
-                onClick={() => setSelectedRoom(a)}
-              >
-                {a.room}
+              <div style={{ fontSize: 28, fontWeight: 900 }}>{r.name}</div>
+              <div style={{ marginTop: 10, padding: "6px 16px", borderRadius: 20, background: "#020617" }}>
+                {filled} / {r.required} Assigned
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* MODALS */}
+      {/* MODAL */}
       {selectedRoom && (
-        <div className="modal">
-          <div className="modal-box">
-            <h2>{selectedRoom.room}</h2>
-            {selectedRoom.teachers.length
-              ? selectedRoom.teachers.map(t => (
-                  <p key={t.id}>{t.name} – {t.session}</p>
-                ))
-              : <p>⏳ Faculty replacement in progress</p>}
-            <button onClick={() => setSelectedRoom(null)}>Close</button>
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
+          display: "flex", justifyContent: "center", alignItems: "center"
+        }}>
+          <div style={{
+            background: "#020617",
+            padding: 24,
+            borderRadius: 18,
+            width: 900,
+            maxWidth: "95vw"
+          }}>
+            <h2>{selectedRoom.name}</h2>
+
+            <div style={{ maxHeight: 500, overflowY: "auto", paddingRight: 10 }}>
+              {facultyStats.map(f => (
+                <div key={f.id} style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  background: "#0f172a",
+                  fontSize: 22,
+                  padding: 14,
+                  borderRadius: 12,
+                  marginBottom: 10
+                }}>
+                  <span>{f.name}</span>
+                  <span style={{
+                    padding: "6px 14px",
+                    borderRadius: 20,
+                    background:
+                      f.risk === "High" ? "#7f1d1d" :
+                      f.risk === "Medium" ? "#78350f" : "#14532d"
+                  }}>{f.risk}</span>
+                  <button onClick={() => assignFaculty(selectedRoom.id, f.id)}>Assign</button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign: "right", marginTop: 12 }}>
+              <button onClick={() => setSelectedRoom(null)}>Close</button>
+            </div>
           </div>
         </div>
       )}
 
-      {selectedTeacher && (
-        <div className="modal">
-          <div className="modal-box">
-            <h2>{selectedTeacher.name}</h2>
-            <p>Invigilation Duties: {selectedTeacher.count}</p>
-            <button onClick={() => setSelectedTeacher(null)}>Close</button>
-          </div>
-        </div>
-      )}
-
-      {/* ================= CSS ================= */}
-      <style>{`
-        .sie{
-          min-height:200vh;
-          padding:30px;
-          background:radial-gradient(circle at top,#020617,#000);
-          color:#e5e7eb;
-          font-family:Poppins, sans-serif;
-        }
-
-        h1{
-          text-align:center;
-          font-size:42px;
-          margin-bottom:20px;
-          color:#7dd3fc;
-          text-shadow:0 0 25px rgba(56,189,248,.6);
-        }
-
-        .top-bar{
-          text-align:center;
-          margin-bottom:20px;
-        }
-
-        .top-bar button{
-          margin:10px;
-          gap:15px;
-          padding:18px 18px;
-          font-size:42px;
-          border-radius:28px;
-          border:none;
-          cursor:pointer;
-          background:#1e293b;
-          color:#e5e7eb;
-        }
-
-        .top-bar .active{
-          background:linear-gradient(90deg,#2563eb,#38bdf8);
-        }
-
-        .layout{
-          display:flex;
-          gap:45px;
-        }
-
-        /* FACULTY */
-        .faculty-panel{
-          width:620px;
-          background:rgba(255,255,255,0.05);
-          border-radius:22px;
-          font-size:60px;
-          padding:16px;
-          backdrop-filter:blur(14px);
-        }
-
-        .faculty-panel input{
-          width:100%;
-          padding:16px;
-         font-size:57px;
-          margin-bottom:10px;
-          border-radius:14px;
-          border:none;
-          color:white;
-        }
-
-        .faculty-panel button{
-          width:100%;
-        font-size:47px;
-          margin-bottom:14px;
-        }
-
-        .faculty-card{
-          background:#1e293b;
-          padding:12px;
-          margin-bottom:10px;
-          border-radius:16px;
-          display:flex;
-          justify-content:space-between;
-          font-size:47px;
-          cursor:pointer;
-          transition:.25s;
-        }
-         /* ===== FACULTY CARD ===== */
-
-
-/* ===== FACULTY CARD ===== */
-
-
-        /* ROOMS */
-        .room-panel{
-          flex:1;
-          background:rgba(255,255,255,0.04);
-          border-radius:22px;
-          padding:5px;
-        }
-
-        .room-grid{
-          display:grid;
-          grid-template-columns:repeat(auto-fill,minmax(850px,2fr));
-          gap:20px;
-        }
-
-        .room-card{
-          background:#334155;
-          padding:22px;
-          border-radius:18px;
-          text-align:center;
-          font-size:45px;
-          cursor:pointer;
-          transition:.3s;
-        }
-
-        .room-card:hover{
-          transform:translateY(-6px);
-          box-shadow:0 0 30px rgba(14,165,233,.5);
-        }
-
-        .room-card.pending{
-          border:2px dashed #eef4f6ff;
-          color:cyan;
-        }
-
-        /* MODAL */
-        .modal{
-          position:fixed;
-          inset:0;
-          background:rgba(1, 0, 10, 0.65);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          z-index:999;
-        }
-
-        .modal-box{
-          background:#020617;
-          padding:30px;
-          border-radius:26px;
-          width:860px;
-          text-align:center;
-          box-shadow:0 0 45px rgba(59,130,246,.6);
-        }
-
-        .modal-box p{
-          font-size:60px;
-          margin:10px 0;
-        }
-
-        .modal-box button{
-          margin-top:20px;
-          padding:12px 30px;
-          font-size:45px;
-          border-radius:20px;
-          border:none;
-          background:linear-gradient(90deg,#2563eb,#38bdf8);
-          color:white;
-          cursor:pointer;
-        }
-      `}</style>
     </div>
   );
-};
-
-export default SmartInvigilatorEngine;
+}

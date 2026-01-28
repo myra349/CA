@@ -48,12 +48,9 @@ const Navbar = () => {
             Campus Vistara
           </li>
 
-          
-          <li onClick={() => handleNavClick("Student Mitra","Student mentoring system","/CircuAIApp")}>
-            Student Mitra
-          </li>
+         
 
-          <li onClick={() => handleNavClick("Smart Timetable","Automatic timetable generation","/TimetableFrontend")}>
+          <li onClick={() => handleNavClick("Smart Timetable","Automatic timetable generation","/timetable")}>
             Smart Timetable
           </li>
 
@@ -70,7 +67,7 @@ const Navbar = () => {
           </li>
 
           <li onClick={() => handleNavClick("Feedback AI","Faculty feedback analytics","/faculty-feedback")}>
-            Feedback AI
+             Faculty Feedback AI
           </li>
 
           {/* ================= ADMIN LINKS ================= */}
@@ -82,7 +79,10 @@ const Navbar = () => {
           <li onClick={() => handleNavClick("Subjects & Curriculum","Manage curriculum","/admin-subjects")}>
              Subjects & Curriculum
           </li>
-
+          
+          <li onClick={() => handleNavClick("Student Mitra","Student mentoring system","/CircuAIApp")}>
+            Student Mitra
+          </li>
           <li onClick={() => window.open("https://lbrce.ac.in/academic_pages/aycalender.php", "_blank")}>
              Academic Calendar
           </li>

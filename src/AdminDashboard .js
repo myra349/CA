@@ -80,7 +80,20 @@ export default function AdminDashboard() {
         {/* LEFT BIG PANEL */}
         <div className="admin-panel big">
           <h2>📊 System Overview</h2>
-          <p>Central control for all institutional resources.</p>
+          <p
+  style={{
+    fontSize: "42px",        // 🔥 BIGGER TEXT
+    fontWeight: "600",
+    color: "#cbd5f5",
+    textAlign: "left",
+    marginTop: "10px",
+    marginBottom: "30px",
+    letterSpacing: "0.5px",
+    opacity: 0.9,
+  }}
+>
+  Central control for all institutional resources.
+</p>
 
           <div className="admin-score">
             System Health Score: <span>96%</span>
@@ -91,11 +104,7 @@ export default function AdminDashboard() {
             {noticeList.map((n, i) => <li key={i}>{n}</li>)}
           </ul>
 
-          <h3>🗓️ Timetable Activity</h3>
-          <ul className="simple-list">
-            {timetableLogs.map((t, i) => <li key={i}>{t}</li>)}
-            {timetableLogs.length === 0 && <li>No timetable generated yet</li>}
-          </ul>
+          
         </div>
 
         {/* RIGHT PANEL 1 - QUICK ACTIONS */}
@@ -105,7 +114,7 @@ export default function AdminDashboard() {
           <button onClick={addStudent}>➕ Add Student</button>
           <button onClick={addSubject}>➕ Create Subject</button>
           <button onClick={publishNotice}>📢 Publish Notice</button>
-          <button onClick={generateTimetable}>🗓️ Generate Timetable</button>
+          
         </div>
 
         {/* RIGHT PANEL 2 - LISTS */}

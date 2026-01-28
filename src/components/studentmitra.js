@@ -106,8 +106,7 @@ export default function StudentAcademicIntelligence() {
               className={`card ${a.level}`}
               onClick={() => openStudent(s)}
             >
-            <h3 className="student-name">{s.name}</h3>
-
+              <h3>{s.name}</h3>
               <p>ID: {s.id} • {s.department}</p>
               <p>Attendance: {s.attendance}% • GPA: {s.gpa}</p>
               <p>Backlogs: {s.backlogs} • Final: {s.final}</p>
@@ -177,7 +176,7 @@ export default function StudentAcademicIntelligence() {
       .low{border-left:6px solid #22c55e}
 
       .grid{
-        max-height:240vh;
+        max-height:280vh;
         overflow-y:auto;
         display:grid;
         grid-template-columns:repeat(auto-fill,minmax(420px,1fr));
@@ -186,8 +185,7 @@ export default function StudentAcademicIntelligence() {
         font-size:40px;
       }
       .card{
-        background: linear-gradient(135deg, #cffafe, #67e8f9, #22d3ee);
-
+        background:#020617;
         padding:18px;
         font-size:55px;
         border-radius:18px;
@@ -198,19 +196,6 @@ export default function StudentAcademicIntelligence() {
         transform:translateY(-6px);
         box-shadow:0 0 25px rgba(59,130,246,.5);
       }
-        .student-name{
-  font-size:22px;
-  font-weight:700;
-  margin-bottom:6px;
-
-  /* Cyan-Blue gradient text */
-  background: linear-gradient(90deg, #0ea5e9, #22d3ee);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-
-  letter-spacing: .3px;
-}
-
 
       .modal{
         position:fixed;
@@ -241,12 +226,11 @@ export default function StudentAcademicIntelligence() {
       .modal-box{
         background:#020617;
         padding:30px;
-        width:1500px;
-        max-height:585vh;
+        width:800px;
+        max-height:85vh;
         overflow-y:auto;
         border-radius:22px;
         box-shadow:0 0 40px rgba(56,189,248,.4);
-        font-size:70px;
       }
       .form-grid{
         display:grid;
@@ -257,7 +241,7 @@ export default function StudentAcademicIntelligence() {
       label{
         display:flex;
         flex-direction:column;
-        font-size:50px;
+        font-size:14px;
       }
       input{
         padding:10px;

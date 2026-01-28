@@ -2,91 +2,141 @@ import React, { useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-/* ================== DATA ================== */
 
-const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+/* ================= DATA ================= */
+
+const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const periods = [1, 2, 3, 4, 5, 6];
 
 const facultyList = [
   "Dr. Suresh Rao","Dr. Anitha Sharma","Prof. Ramesh Kumar","Prof. Kavitha Reddy",
   "Dr. Naveen Gupta","Dr. Sunitha Iyer","Prof. Mahesh Naidu","Dr. Priya Verma",
-  "Dr. Kiran Patel","Prof. Lakshmi Devi","Dr. Arjun Singh","Dr. Meena Kapoor",
-  "Prof. Satish Chandra","Dr. Pooja Mishra","Dr. Ravi Teja","Prof. Deepika Nair",
-  "Dr. Vinod Babu","Dr. Swathi Rao","Prof. Harish Kulkarni","Dr. Neha Agarwal",
-  "Prof. Sandeep Jain","Dr. Bhavya Sri","Dr. Ajay Malhotra","Prof. Nithin Reddy",
-  "Dr. Sneha Joshi","Prof. Rajesh Khanna","Dr. Aishwarya Das","Dr. Prakash Menon",
-  "Prof. Srilatha","Dr. Venkatesh"
+  "Dr. Kiran Patel","Prof. Lakshmi Devi","Dr. Arjun Singh","Dr. Meena Kapoor"
 ];
 
 const semesters = {
-  Sem1: ["Maths", "Physics", "C", "English", "Chemistry", "Lab1"],
-  Sem2: ["DS", "OOP", "EVS", "Stats", "Python", "Lab2"],
-  Sem3: ["OS", "DBMS", "CN", "Java", "SE", "Lab3"],
-  Sem4: ["AI", "ML", "Web", "COA", "TOC", "Lab4"],
-  Sem5: ["Cloud", "IOT", "NLP", "BigData", "Crypto", "Lab5"],
-  Sem6: ["DL", "DSA", "Robotics", "ARVR", "Compiler", "Lab6"],
-  Sem7: ["Project", "Elective1", "Elective2", "Elective3", "Seminar", "Internship"]
+  Sem1: ["Maths","Physics","C","English","Chemistry","Lab1"],
+  Sem2: ["DS","OOP","Stats","Python","EVS","Lab2"],
+  Sem3: ["OS","DBMS","CN","Java","SE","Lab3"],
+  Sem4: ["AI","ML","Web","COA","TOC","Lab4"]
 };
 
-/* ================== COMPONENT ================== */
+/* ================= COMPONENT ================= */
 
-export default function SmartTimetable() {
-  const [selectedSem, setSelectedSem] = useState("Sem1");
-  const [subjectFaculty, setSubjectFaculty] = useState({});
-  const [timetable, setTimetable] = useState({});
+export default function SmartTimetablePro() {
 
-  /* ============ ASSIGN FACULTY ============ */
-  const assignFaculty = (subject, faculty) => {
-    setSubjectFaculty(prev => ({
-      ...prev,
-      [selectedSem]: {
-        ...(prev[selectedSem] || {}),
-        [subject]: faculty
+  const [classes, setClasses] = useState({});
+  const [currentClass, setCurrentClass] = useState("");
+
+  const [semester, setSemester] = useState("");
+  const [className, setClassName] = useState("");
+  const [classTeacher, setClassTeacher] = useState("");
+  const [crName, setCrName] = useState("");
+
+  const [selectedDay, setSelectedDay] = useState("Mon");
+  const [selectedPeriod, setSelectedPeriod] = useState(1);
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedFaculty, setSelectedFaculty] = useState("");
+
+  /* ============ CREATE CLASS ============ */
+  const createClass = () => {
+    if (!semester || !className || !classTeacher || !crName) {
+      alert("Fill all fields");
+      return;
+    }
+
+    setClasses(prev => {
+      const newObj = structuredClone(prev);
+      if (!newObj[className]) {
+        newObj[className] = {
+          semester,
+          teacher: classTeacher,
+          cr: crName,
+          timetable: {}
+        };
       }
-    }));
-  };
-
-  /* ============ GENERATE TIMETABLE ============ */
-  const generateTimetable = () => {
-    let tt = {};
-    let facultyBusy = {};
-
-    days.forEach(d => (tt[d] = {}));
-
-    semesters[selectedSem].forEach(sub => {
-      const fac = subjectFaculty[selectedSem]?.[sub];
-      if (!fac) return;
-
-      let placed = 0;
-      while (placed < 4) {
-        const d = days[Math.floor(Math.random() * days.length)];
-        const p = periods[Math.floor(Math.random() * periods.length)];
-
-        facultyBusy[fac] ??= {};
-        facultyBusy[fac][d] ??= {};
-
-        if (!tt[d][p] && !facultyBusy[fac][d][p]) {
-          tt[d][p] = { subject: sub, faculty: fac };
-          facultyBusy[fac][d][p] = true;
-          placed++;
-        }
-      }
+      return newObj;
     });
 
-    setTimetable(tt);
-    alert("✅ Timetable Generated Successfully");
+    setCurrentClass(className);
+    alert("Class Created & Selected");
   };
 
-  /* ============ PDF DOWNLOAD ============ */
+  /* ============ ASSIGN PERIOD ============ */
+  const assignPeriod = () => {
+    if (!currentClass) return alert("Select class");
+    if (!selectedSubject || !selectedFaculty) return alert("Select subject & faculty");
+
+    setClasses(prev => {
+      const newClasses = structuredClone(prev);
+
+      if (!newClasses[currentClass].timetable[selectedDay]) {
+        newClasses[currentClass].timetable[selectedDay] = {};
+      }
+
+      newClasses[currentClass].timetable[selectedDay][selectedPeriod] = {
+        subject: selectedSubject,
+        faculty: selectedFaculty
+      };
+
+      return newClasses;
+    });
+  };
+
+  /* ============ AUTO GENERATE ============ */
+  const autoGenerate = () => {
+    if (!currentClass) return alert("Select class");
+
+    setClasses(prev => {
+      const newClasses = structuredClone(prev);
+      const cls = newClasses[currentClass];
+      const subjects = semesters[cls.semester];
+
+      let tt = {};
+      days.forEach(d => tt[d] = {});
+
+      subjects.forEach(sub => {
+        let count = sub.toLowerCase().includes("lab") ? 2 : 3;
+        let tries = 0;
+
+        while (count > 0 && tries < 500) {
+          tries++;
+          const d = days[Math.floor(Math.random() * days.length)];
+          const p = Math.floor(Math.random() * 6) + 1;
+          const fac = facultyList[Math.floor(Math.random() * facultyList.length)];
+
+          if (!tt[d][p]) {
+            tt[d][p] = { subject: sub, faculty: fac };
+            count--;
+          }
+        }
+      });
+
+      cls.timetable = tt;
+      return newClasses;
+    });
+
+    alert("Timetable Auto Generated");
+  };
+
+  /* ============ PDF ============ */
   const downloadPDF = () => {
+    if (!currentClass) return;
+
+    const cls = classes[currentClass];
+    const tt = cls?.timetable || {};
+
     const doc = new jsPDF();
-    doc.text(`Timetable - ${selectedSem}`, 14, 15);
+    doc.text(`Class: ${currentClass}`, 14, 15);
+    doc.text(`Semester: ${cls.semester}`, 14, 22);
+    doc.text(`Teacher: ${cls.teacher}`, 14, 29);
+    doc.text(`CR: ${cls.cr}`, 14, 36);
 
     const body = days.map(d => [
       d,
       ...periods.map(p =>
-        timetable[d]?.[p]
-          ? `${timetable[d][p].subject}\n${timetable[d][p].faculty}`
+        tt[d]?.[p]
+          ? `${tt[d][p].subject}\n${tt[d][p].faculty}`
           : "-"
       )
     ]);
@@ -94,21 +144,20 @@ export default function SmartTimetable() {
     autoTable(doc, {
       head: [["Day", ...periods.map(p => "P" + p)]],
       body,
-      startY: 25,
-      styles: { fontSize: 9 }
+      startY: 45,
+      styles: { fontSize: 10 }
     });
 
-    doc.save(`Timetable_${selectedSem}.pdf`);
+    doc.save(`Timetable_${currentClass}.pdf`);
   };
 
   /* ============ TABLE ============ */
   const renderTable = () => {
-    if (!Object.keys(timetable).length) {
-      return <p style={{ marginTop: 20 }}>⚠️ Generate timetable first</p>;
-    }
+    if (!currentClass) return null;
+    const tt = classes[currentClass]?.timetable || {};
 
     return (
-      <table border="1" cellPadding="10" style={{ marginTop: 30, width: "100%" }}>
+      <table className="stp-table">
         <thead>
           <tr>
             <th>Day</th>
@@ -119,16 +168,32 @@ export default function SmartTimetable() {
           {days.map(d => (
             <tr key={d}>
               <th>{d}</th>
-              {periods.map(p => (
-                <td key={p}>
-                  {timetable[d][p] ? (
-                    <>
-                      <b>{timetable[d][p].subject}</b><br />
-                      <small>{timetable[d][p].faculty}</small>
-                    </>
-                  ) : "-"}
-                </td>
-              ))}
+              {periods.map(p => {
+                const isSelected = selectedDay === d && selectedPeriod === p;
+                return (
+                  <td
+                    key={p}
+                    onClick={() => {
+                      setSelectedDay(d);
+                      setSelectedPeriod(p);
+                    }}
+                    className={
+                      isSelected
+                        ? "stp-cell-selected"
+                        : tt[d]?.[p]
+                        ? "stp-cell-filled"
+                        : "stp-cell-empty"
+                    }
+                  >
+                    {tt[d]?.[p]
+                      ? <>
+                          <b>{tt[d][p].subject}</b><br/>
+                          <span>{tt[d][p].faculty}</span>
+                        </>
+                      : "-"}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>
@@ -136,42 +201,90 @@ export default function SmartTimetable() {
     );
   };
 
-  /* ================== UI ================== */
+  /* ================= UI ================= */
 
   return (
-    <div className="tt-root" style={{ padding: 40 }}>
-      <h1>Smart Timetable Alignment Engine</h1>
+    <div className="stp-root">
 
-      <h3>🎓 Select Semester</h3>
-      <select value={selectedSem} onChange={e => setSelectedSem(e.target.value)}>
-        {Object.keys(semesters).map(s => <option key={s}>{s}</option>)}
-      </select>
+      <h2 className="stp-main-title">Smart Timetable Admin Panel</h2>
 
-      <h3 style={{ marginTop: 25 }}>👨‍🏫 Assign Faculty</h3>
-      {semesters[selectedSem].map(sub => (
-        <div key={sub} style={{ marginBottom: 12 }}>
-          <strong style={{ width: 120, display: "inline-block" }}>{sub}</strong>
-          <select
-            value={subjectFaculty[selectedSem]?.[sub] || ""}
-            onChange={e => assignFaculty(sub, e.target.value)}
-          >
-            <option value="">-- Select Faculty --</option>
-            {facultyList.map(f => <option key={f}>{f}</option>)}
-          </select>
+      {/* CREATE CLASS */}
+      <div className="stp-panel">
+        <h3 className="stp-section-title">Create Class</h3>
+
+        <div className="stp-form-grid">
+          <div className="stp-field">
+            <label>Semester</label>
+            <select className="stp-select" value={semester} onChange={e => setSemester(e.target.value)}>
+              <option value="">Select Semester</option>
+              {Object.keys(semesters).map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+
+          <div className="stp-field">
+            <label>Class Name</label>
+            <input className="stp-input" value={className} onChange={e => setClassName(e.target.value)} />
+          </div>
+
+          <div className="stp-field">
+            <label>Class Teacher</label>
+            <input className="stp-input" value={classTeacher} onChange={e => setClassTeacher(e.target.value)} />
+          </div>
+
+          <div className="stp-field">
+            <label>CR Name</label>
+            <input className="stp-input" value={crName} onChange={e => setCrName(e.target.value)} />
+          </div>
         </div>
-      ))}
 
-      <br />
-      <button onClick={generateTimetable}>⚡ Generate Timetable</button>
-      <button onClick={downloadPDF} style={{ marginLeft: 20 }}>
-        📄 Download PDF
-      </button>
+        <div style={{ textAlign: "center", marginTop: 20 }}>
+          <button className="stp-btn" onClick={createClass}>➕ Create Class</button>
+        </div>
+      </div>
 
-      {renderTable()}
+      {/* SELECT CLASS */}
+      <div className="stp-panel">
+        <h3 className="stp-section-title">Select Class</h3>
+        <select className="stp-select" value={currentClass} onChange={e => setCurrentClass(e.target.value)}>
+          <option value="">-- Select Class --</option>
+          {Object.keys(classes).map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+
+      {/* ADMIN PANEL */}
+      {currentClass && (
+        <div className="stp-panel">
+          <h3 className="stp-section-title">Admin Allocate</h3>
+
+          <select className="stp-select" value={selectedDay} onChange={e => setSelectedDay(e.target.value)}>
+            {days.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+
+          <select className="stp-select" value={selectedPeriod} onChange={e => setSelectedPeriod(Number(e.target.value))}>
+            {periods.map(p => <option key={p} value={p}>P{p}</option>)}
+          </select>
+
+          <select className="stp-select" value={selectedSubject} onChange={e => setSelectedSubject(e.target.value)}>
+            <option value="">Select Subject</option>
+            {semesters[classes[currentClass].semester].map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+
+          <select className="stp-select" value={selectedFaculty} onChange={e => setSelectedFaculty(e.target.value)}>
+            <option value="">Select Faculty</option>
+            {facultyList.map(f => <option key={f} value={f}>{f}</option>)}
+          </select>
+
+          <br/><br/>
+
+          <button className="stp-btn" onClick={assignPeriod}>Assign</button>
+          <button className="stp-btn" onClick={autoGenerate}>Auto Generate</button>
+          <button className="stp-btn" onClick={downloadPDF}>Export PDF</button>
+
+          {renderTable()}
+        </div>
+      )}
+
     </div>
   );
 }
-
-
-
 

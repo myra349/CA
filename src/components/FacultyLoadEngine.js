@@ -88,7 +88,7 @@ const FacultyFeedbackUltraEngine = () => {
 
   return (
     <div className="ultra-container">
-      <h1>🧠 Faculty Feedback Intelligence Engine</h1>
+      
 
       {/* --------- DEPT DASHBOARD --------- */}
       <div className="dept-board">

@@ -14,18 +14,20 @@ import CircularGenerator from "./components/CircularGenerator";
 import DigiNotice from "./components/DigiNotice form";
 import SampleUsers from "./components/CircuLibrary";
 import ParentConnect from "./components/parentconnect";
-import TimetableFrontend from "./components/TimetableFrontend";
 import FacultyFeedbackEngine from "./components/Feeback";
 import  SmartInvigilatorEngine from "./components/invi";
 import SubjectsCurriculum from "./components/SubjectsCurriculum";
-
+import SmartTimetablePro from "./components/TimetableFrontend";
 /* ===== NEW COMPONENT ===== */
 import StudentFeeAttendanceIntelligence from "./components/Course";
 import StudentAttendanceAnalyticsEngine 
 from "./components/StudentAttendanceAnalyticsEngine";
 import AdminDashboard from "./AdminDashboard "
-
-
+import HallTicketGenerator from "./components/HallTicketGenerator";
+import SalaryManagement from "./components/SalaryManagement";
+import BudgetAuditManagement from "./components/BudgetAuditManagement";
+import FacultyWorkloadManager from "./components/FacultyWorkLoadManager";
+import AdvancedLeaveManagementSystem from "./components/AdvancedLeaveManagementSystem";
 
 function App() {
   return (
@@ -40,11 +42,18 @@ function App() {
         <Route path="/ModernChatbot" element={<ModernChatbot />} />
         <Route path="/AIApp" element={<NoticeForm />} />
         <Route path="/settings" element={<DigiNotice />} />
-        <Route path="/TimetableFrontend" element={<TimetableFrontend />} />
+      <Route path="/exam/hallticket" element={<HallTicketGenerator />} />
+       <Route path="/finance/salary" element={<SalaryManagement />} />
+       <Route path="/finance/budget" element={<BudgetAuditManagement />} />
+      <Route path="/leave-system" element={<AdvancedLeaveManagementSystem />} />
+       <Route path="/admin/faculty-workload" element={<FacultyWorkloadManager />} />
         <Route path="/CircuAIApp" element={<SampleUsers />} />
         <Route path="/ParentConnect" element={<ParentConnect />} />
    <Route path="/admin-dashboard" element={<AdminDashboard />} />
 <Route path="/admin-subjects" element={<SubjectsCurriculum />} />
+   <Route path="/timetable" element={<SmartTimetablePro />} />
+   
+<Route path="/admin/faculty-workload" element={<FacultyWorkloadManager />} />
 
 
 
