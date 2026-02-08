@@ -87,17 +87,18 @@ const DEPT_MODULES = {
   ],
 
   academics: [
-    { key:"timetable", title:"Smart Timetable", desc:"Auto timetable generator" },
-    { key:"subjects", title:"Subjects & Curriculum", desc:"Syllabus & curriculum control" },
-    { key:"health", title:"Academic Health", desc:"Performance analytics" },
-    { key:"student", title:"Student Mitra", desc:"Mentoring & guidance system" },
+    { key:"timetable", title:"Smart Timetable", desc:"Auto timetable generator",route:"/timetable" },
+    { key:"subjects", title:"Subjects & Curriculum", desc:"Syllabus & curriculum control",route:"/admin-subjects" },
+    { key:"student", title:"Student Mitra", desc:"Mentoring & guidance system", route:"/CircuAIApp" },
+    { key:"health", title:"Academic Health", desc:"Performance analytics",route:"/student-attendance-analytics"  },
   ],
 
+
   admin: [
-    { key:"admindash", title:"Admin Dashboard", desc:"System overview & monitoring" },
-    { key:"users", title:"User Management", desc:"Create & manage users" },
-    { key:"roles", title:"Roles & Permissions", desc:"Access control system" },
-    { key:"circulars", title:"Office Circulars", desc:"Official notices & circulars" },
+    { key:"admindash", title:"Admin Dashboard", desc:"System overview & monitoring",route:"/admin-dashboard" },
+    { key:"users", title:"User Management", desc:"Create & manage users",route:"/admin/users" },
+    { key:"roles", title:"Roles & Permissions", desc:"Access control system", route:"/RolesPermission" },
+    { key:"circulars", title:"Office Circulars", desc:"Official notices & circulars",route:"/admin/circulars" },
   ],
 
   infra: [
@@ -140,21 +141,33 @@ const DEPT_MODULES = {
   ],
 
   analytics: [
-    { key:"dash", title:"Analytics Dashboard", desc:"Institution level analytics" },
-    { key:"compare", title:"Department Comparison", desc:"Compare performance" },
-    { key:"predict", title:"AI Predictions", desc:"Predict trends" },
+    { key:"dash", title:"Analytics Dashboard", desc:"Institution level analytics",  route:"/analytics/dashboard" },
+    { key:"compare", title:"Department Comparison", desc:"Compare performance", route:"/analytics/compare" },
+    { key:"predict", title:"AI Predictions", desc:"Predict trends",route:"/ai-predictions" },
   ],
 
   library: [
-    { key:"books", title:"Book Inventory", desc:"Manage books" },
+    { 
+  key: "books",
+  title: "Book Inventory",
+  desc: "Manage books",
+  route: "/book-inventory"
+},
     { key:"issue", title:"Issue / Return", desc:"Track issue & returns" },
-    { key:"digital", title:"Digital Resources", desc:"E-books & journals" },
+    {
+  key: "digital",
+  title: "Digital Resources",
+  desc: "E-books & journals",
+  route: "/resources"
+},
+
   ],
 
   quality: [
-    { key:"naac", title:"NAAC / NBA Dashboard", desc:"Accreditation monitoring" },
-    { key:"docs", title:"Document Repository", desc:"Criteria-wise document storage" },
-    { key:"reports", title:"Self Study Reports", desc:"SSR & compliance reports" },
+    { key:"naac", title:"NAAC / NBA Dashboard", desc:"Accreditation monitoring" ,route:"/naac"},
+    { key:"docs", title:"Feedback AI", desc:"Faculty feedback analytics",route:"/faculty-feedback" },
+    { key:"reports", title:"Self Study Reports", desc:"SSR & compliance reports", route:"/quality/reports" }
+
   ],
 
 };

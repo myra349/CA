@@ -3397,4 +3397,3 @@ td:has(span):not(:has(b)) {
 .fx-card:hover .fx-glow {
   opacity: 1;
 }
-

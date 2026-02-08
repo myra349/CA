@@ -1,181 +1,362 @@
-// src/components/AdminSurveillance.js
-import React, { useState, useEffect, useRef } from "react";
-import { FaBars, FaMoon, FaSun, FaPlay, FaPause, FaDownload } from "react-icons/fa";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import "../App.css";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-// Define campus feeds & sample video URLs (simulation)
-const VIDEO_FEEDS = {
-  "Exam Hall": Array.from({ length: 10 }, (_, i) => `examhall-${i+1}.mp4`),
-  "Corridor": Array.from({ length: 10 }, (_, i) => `corridor-${i+1}.mp4`),
-  "Library": Array.from({ length: 10 }, (_, i) => `library-${i+1}.mp4`),
-  "Canteen": Array.from({ length: 10 }, (_, i) => `canteen-${i+1}.mp4`),
-  "Staff Room": Array.from({ length: 10 }, (_, i) => `staffroom-${i+1}.mp4`),
-  "Open Area": Array.from({ length: 10 }, (_, i) => `openarea-${i+1}.mp4`)
-  
-};
+/* ================= PERMISSION MASTER ================= */
 
-const FEEDS = Object.keys(VIDEO_FEEDS);
+const PERMISSIONS = [
+  { key:"users.view", label:"View Users" },
+  { key:"users.edit", label:"Create / Edit Users" },
+  { key:"users.delete", label:"Delete Users" },
 
-// Generate random anomaly
-const generateAnomaly = (feed) => {
-  const types = [
-    { type: "Fighting", severity: "High", desc: "Aggressive interaction" },
-    { type: "Pushing", severity: "Medium", desc: "Two persons pushing" },
-    { type: "Loitering", severity: "Low", desc: "Person staying idle" },
-    { type: "Blocking", severity: "Medium", desc: "Path blocked by group" },
-    { type: "Running", severity: "Medium", desc: "Sudden movement" },
-    { type: "Fall", severity: "High", desc: "Person fell down" },
-  ];
-  const pick = types[Math.floor(Math.random() * types.length)];
-  const persons = Math.floor(Math.random() * 4) + 1;
-  const confidence = Math.round((0.7 + Math.random() * 0.3) * 100);
-  return {
-    id: Date.now() + "-" + Math.floor(Math.random() * 1000),
-    type: pick.type,
-    severity: pick.severity,
-    personsInvolved: persons,
-    time: new Date().toLocaleTimeString(),
-    location: feed,
-    confidence,
-    description: `${pick.desc} near ${feed}. Estimated involved: ${persons}.`,
-    bbox: Array.from({ length: persons }).map((_, i) => ({
-      id: `b-${i}-${Math.floor(Math.random()*10000)}`,
-      top: `${Math.floor(Math.random() * 70) + 10}%`,
-      left: `${Math.floor(Math.random() * 70) + 10}%`,
-      width: 80 + Math.floor(Math.random() * 60),
-      height: 120 + Math.floor(Math.random() * 60),
-      label: "Person",
-    })),
-    videoClip: VIDEO_FEEDS[feed][Math.floor(Math.random() * VIDEO_FEEDS[feed].length)]
-  };
-};
+  { key:"timetable.manage", label:"Manage Timetable" },
+  { key:"subjects.manage", label:"Subjects & Curriculum" },
+  { key:"students.analytics", label:"Student Analytics" },
 
-const Surveillance = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [darkMode, setDarkMode] = useState(true);
-  const [detectionActive, setDetectionActive] = useState(true);
-  const [currentFeed, setCurrentFeed] = useState(FEEDS[0]);
-  const [currentVideos, setCurrentVideos] = useState(VIDEO_FEEDS[FEEDS[0]]);
-  const [anomalies, setAnomalies] = useState([]);
-  const [stats, setStats] = useState({ persons: 0, anomalies: 0, streams: FEEDS.length });
-  const [chartData, setChartData] = useState([]);
-  const videoRef = useRef(null);
+  { key:"finance.view", label:"View Finance" },
+  { key:"finance.edit", label:"Edit Finance" },
 
-  const playAlertSound = () => { new Audio("/alert-beep.mp3").play().catch(()=>{}); };
-  const speakAlert = (msg) => { const u = new SpeechSynthesisUtterance(msg); speechSynthesis.speak(u); };
+  { key:"leave.approve", label:"Approve Leave" },
+  { key:"workload.manage", label:"Manage Faculty Workload" },
 
-  // Simulation: generate anomalies
-  useEffect(() => {
-    if (!detectionActive) return;
-    const interval = setInterval(() => {
-      // update chart
-      setChartData(prev => {
-        const lastPersons = (prev.length && prev[prev.length-1].persons) || stats.persons;
-        const nextPersons = Math.max(0, lastPersons + Math.floor(Math.random()*3));
-        return [...prev.slice(-9), { time: new Date().toLocaleTimeString().slice(3,8), persons: nextPersons, anomalies: anomalies.length }];
-      });
-  
-      // randomly create anomaly
-      if (Math.random() < 0.35) {
-        const newAnom = generateAnomaly(currentFeed);
-        setAnomalies(prev => [newAnom, ...prev].slice(0,20));
-        setStats(prev => ({ ...prev, anomalies: prev.anomalies+1, persons: prev.persons+newAnom.personsInvolved }));
-        playAlertSound();
-        speakAlert(`Alert: ${newAnom.type} in ${newAnom.location}`);
+  { key:"system.settings", label:"System Settings" },
+  { key:"audit.logs", label:"Audit & Logs" },
+];
+
+/* ================= INITIAL ROLES ================= */
+
+const initialRoles = [
+  {
+    id:"R1",
+    name:"Super Admin",
+    permissions: PERMISSIONS.map(p=>p.key)
+  },
+  {
+    id:"R2",
+    name:"Academic Officer",
+    permissions: [
+      "timetable.manage",
+      "subjects.manage",
+      "students.analytics",
+      "users.view"
+    ]
+  },
+  {
+    id:"R3",
+    name:"Finance Officer",
+    permissions: [
+      "finance.view",
+      "finance.edit"
+    ]
+  },
+  {
+    id:"R4",
+    name:"Faculty",
+    permissions: [
+      "students.analytics"
+    ]
+  }
+];
+
+/* ================= COMPONENT ================= */
+
+export default function RolesPermissions(){
+
+  const navigate = useNavigate();
+
+  const [roles, setRoles] = useState(initialRoles);
+  const [selected, setSelected] = useState(roles[0]);
+  const [newRoleName, setNewRoleName] = useState("");
+
+  /* ============ TOGGLE PERMISSION ============ */
+
+  const togglePermission = (perm) => {
+
+    setRoles(prev => {
+
+      const copy = structuredClone(prev);
+
+      const role = copy.find(r => r.id === selected.id);
+
+      if(role.permissions.includes(perm)){
+        role.permissions = role.permissions.filter(p => p !== perm);
+      }else{
+        role.permissions.push(perm);
       }
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [detectionActive, currentFeed, anomalies.length, stats.persons]);
 
-  useEffect(() => {
-    setStats(prev => ({ ...prev, anomalies: anomalies.length }));
-  }, [anomalies]);
-
-  const switchFeed = (feed) => {
-    setCurrentFeed(feed);
-    setCurrentVideos(VIDEO_FEEDS[feed]);
-    setAnomalies([]);
-    setStats({ persons:0, anomalies:0, streams:FEEDS.length });
+      setSelected({ ...role });
+      return copy;
+    });
   };
 
-  const downloadReport = () => {
-    if (!anomalies.length) return alert("No anomalies to download.");
-    const headers = ["id","type","severity","personsInvolved","time","location","confidence","description","bbox_count"];
-    const rows = anomalies.map(a => [a.id,a.type,a.severity,a.personsInvolved,a.time,a.location,a.confidence,`"${a.description.replace(/"/g,'""')}"`,a.bbox.length].join(","));
-    const csv = [headers.join(","),...rows].join("\n");
-    const blob = new Blob([csv],{type:"text/csv"});
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `Surveillance_Anomalies_${Date.now()}.csv`;
-    link.click();
+  /* ============ CREATE ROLE ============ */
+
+  const addRole = () => {
+
+    if(!newRoleName.trim()) return;
+
+    setRoles(prev => [
+      ...prev,
+      {
+        id: "R" + (prev.length + 1),
+        name: newRoleName,
+        permissions:[]
+      }
+    ]);
+
+    setNewRoleName("");
+  };
+
+  /* ============ DELETE ROLE ============ */
+
+  const deleteRole = (id) => {
+
+    if(!window.confirm("Delete this role?")) return;
+
+    setRoles(prev => prev.filter(r => r.id !== id));
+
+    if(selected.id === id){
+      setSelected(null);
+    }
   };
 
   return (
-    <div className={`admin-dashboard ${sidebarOpen?"sidebar-open":"sidebar-closed"} ${darkMode?"dark-mode":"light-mode"}`}>
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-header"><h2>Admin Panel</h2><FaBars onClick={()=>setSidebarOpen(!sidebarOpen)} /></div>
-        <ul>
-          {FEEDS.map(feed => <li key={feed} className={feed===currentFeed?"active":""} onClick={()=>switchFeed(feed)}>{feed}</li>)}
-        </ul>
-        <div className="theme-switcher" onClick={()=>setDarkMode(!darkMode)}>{darkMode?<><FaSun/> Light</>:<><FaMoon/> Dark</>}</div>
-      </aside>
+    <div className="rp-root">
 
-      <main className="main-content">
-        <h2>AI Surveillance Monitoring</h2>
-        <p>Monitoring <b>{currentFeed}</b> in real-time with YOLOv8 (simulated).</p>
+      {/* TOP BAR */}
+      <div className="rp-top">
 
-        {/* Controls */}
-        <div className="admin-controls">
-          <button onClick={()=>setDetectionActive(!detectionActive)}>{detectionActive?<><FaPause/> Pause</>:<><FaPlay/> Start</>}</button>
-          <button onClick={downloadReport}><FaDownload/> Download Report</button>
+        <button
+          className="rp-back"
+          onClick={() =>
+            navigate("/dashboard",{ state:{ openDept:"admin" }})
+          }
+        >
+          ⬅ Back
+        </button>
+
+        <div className="rp-title">
+          Roles & Permissions Control
         </div>
 
-        {/* Stats */}
-        <div className="stats-summary">
-          <div className="stat-card"><div>Persons</div><div>{stats.persons}</div></div>
-          <div className="stat-card"><div>Anomalies</div><div>{stats.anomalies}</div></div>
-          <div className="stat-card"><div>Streams</div><div>{stats.streams}</div></div>
-        </div>
+      </div>
 
-        {/* Chart */}
-        <div className="chart-section">
-          <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={chartData}>
-              <XAxis dataKey="time"/>
-              <YAxis/>
-              <Tooltip/>
-              <Line type="monotone" dataKey="persons" stroke="#3b82f6" strokeWidth={2}/>
-              <Line type="monotone" dataKey="anomalies" stroke="#ef4444" strokeWidth={2}/>
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+      <div className="rp-layout">
 
-        {/* Videos */}
-        <div className="video-grid">
-          {currentVideos.map((v,i)=><video key={i} src={v} controls width="300" height="180" autoPlay muted loop/>)}
-        </div>
+        {/* LEFT : ROLES */}
+        <div className="rp-roles">
 
-        {/* Anomalies list */}
-        <div className="anomalies-list">
-          {anomalies.length===0?<p>No anomalies detected yet.</p>:anomalies.map(a=>(
-            <div key={a.id} className="anomaly-card">
-              <div>{a.type} • {a.time} • {a.location}</div>
-              <div>{a.description}</div>
-              <div>
-                <button onClick={()=>{ if(videoRef.current){videoRef.current.src=a.videoClip; videoRef.current.play().catch(()=>{}); } }}>Play Clip</button>
-                <button onClick={()=>setAnomalies(prev=>prev.filter(an=>an.id!==a.id))}>Resolve</button>
-              </div>
+          <h3>Roles</h3>
+
+          {roles.map(r => (
+            <div
+              key={r.id}
+              className={`rp-role ${selected?.id === r.id ? "active" : ""}`}
+              onClick={() => setSelected(r)}
+            >
+              <span>{r.name}</span>
+
+              {r.name !== "Super Admin" && (
+                <button
+                  className="rp-del"
+                  onClick={(e)=>{
+                    e.stopPropagation();
+                    deleteRole(r.id);
+                  }}
+                >
+                  ✖
+                </button>
+              )}
             </div>
           ))}
+
+          <div className="rp-add">
+            <input
+              placeholder="New role name"
+              value={newRoleName}
+              onChange={e=>setNewRoleName(e.target.value)}
+            />
+            <button onClick={addRole}>Add</button>
+          </div>
+
         </div>
-      </main>
+
+        {/* RIGHT : PERMISSIONS */}
+        <div className="rp-perms">
+
+          {selected ? (
+            <>
+              <h3>{selected.name} – Permissions</h3>
+
+              <div className="rp-grid">
+                {PERMISSIONS.map(p => (
+                  <label key={p.key} className="rp-check">
+                    <input
+                      type="checkbox"
+                      checked={selected.permissions.includes(p.key)}
+                      onChange={()=>togglePermission(p.key)}
+                    />
+                    <span>{p.label}</span>
+                  </label>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p>Select a role</p>
+          )}
+
+        </div>
+
+      </div>
+
+      {/* CSS */}
+      <style>{css}</style>
     </div>
   );
-};
+}
 
-export default Surveillance;
+
+/* ================= CSS ================= */
+
+const css = `
+.rp-root{
+  min-height:100vh;
+  background:#020617;
+  color:#e5e7eb;
+  padding:30px 40px 70px;
+  font-family:'Inter','Segoe UI','Roboto','Helvetica Neue',Arial,sans-serif;
+}
+
+/* TOP */
+.rp-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:25px;
+}
+
+.rp-title{
+  font-size:30px;
+  font-weight:900;
+  color:#38bdf8;
+}
+
+.rp-back{
+  background:#020617;
+  border:1px solid #1e293b;
+  color:#cbd5f5;
+  padding:8px 14px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+/* LAYOUT */
+.rp-layout{
+  display:grid;
+  grid-template-columns:300px 1fr;
+  gap:20px;
+}
+
+/* ROLES */
+.rp-roles{
+  border:1px solid #1e293b;
+  border-radius:18px;
+  padding:16px;
+  background:#020617;
+}
+
+.rp-roles h3{
+  margin-bottom:12px;
+  color:#38bdf8;
+}
+
+.rp-role{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  margin-bottom:6px;
+  border:1px solid transparent;
+}
+
+.rp-role:hover{
+  background:#0b1020;
+}
+
+.rp-role.active{
+  border-color:#38bdf8;
+  background:#0b1020;
+}
+
+.rp-del{
+  background:none;
+  border:none;
+  color:#ef4444;
+  cursor:pointer;
+  font-size:14px;
+}
+
+/* ADD ROLE */
+.rp-add{
+  display:flex;
+  gap:6px;
+  margin-top:12px;
+}
+
+.rp-add input{
+  flex:1;
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #1e293b;
+  background:#0b1020;
+  color:white;
+}
+
+.rp-add button{
+  padding:8px 12px;
+  border:none;
+  border-radius:8px;
+  background:#38bdf8;
+  color:#020617;
+  font-weight:700;
+}
+
+/* PERMISSIONS */
+.rp-perms{
+  border:1px solid #1e293b;
+  border-radius:18px;
+  padding:16px;
+  background:#020617;
+}
+
+.rp-perms h3{
+  margin-bottom:12px;
+  color:#38bdf8;
+}
+
+.rp-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:10px;
+}
+
+.rp-check{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#0b1020;
+  padding:10px;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:14px;
+}
+
+.rp-check input{
+  accent-color:#38bdf8;
+}
+`;
+
 
 
 

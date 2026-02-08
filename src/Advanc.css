@@ -1,0 +1,519 @@
+/* ===============================
+   Vistar Netra – NAAC / NBA
+   Advanced Professional UI Skin
+   =============================== */
+
+:root{
+  --bg-1:#020617;
+  --bg-2:#0b1024;
+  --accent:#6366f1;
+  --accent-soft:rgba(99,102,241,.25);
+  --card-bg:rgba(15,23,42,.55);
+  --card-border:rgba(148,163,184,.12);
+  --txt-main:#ffffff;
+  --txt-soft:#cbd5f5;
+  --success:#34d399;
+  --warn:#facc15;
+  --danger:#fb7185;
+}
+
+/* ---------- Root shell ---------- */
+.naac-dashboard{
+  color:var(--txt-main);
+  position:relative;
+  isolation:isolate;
+}
+
+.naac-dashboard::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(900px 300px at 10% -10%, rgba(99,102,241,.18), transparent 60%),
+    radial-gradient(800px 400px at 90% 0%, rgba(56,189,248,.10), transparent 60%),
+    radial-gradient(700px 400px at 50% 100%, rgba(139,92,246,.10), transparent 60%);
+  z-index:-1;
+}
+
+/* ---------- Glass card system ---------- */
+.naac-dashboard .rounded-2xl{
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)), var(--card-bg);
+  border:1px solid var(--card-border);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  position:relative;
+  overflow:hidden;
+}
+
+.naac-dashboard .rounded-2xl::after{
+  content:"";
+  position:absolute;
+  inset:auto -40% -60% -40%;
+  height:140%;
+  background:linear-gradient(120deg, transparent, rgba(255,255,255,.06), transparent);
+  transform:translateY(40%);
+  pointer-events:none;
+}
+
+.naac-dashboard .rounded-2xl:hover{
+  transform:translateY(-6px) scale(1.005);
+  border-color:rgba(99,102,241,.45);
+  box-shadow:
+    0 30px 60px rgba(2,6,23,.6),
+    0 0 0 1px rgba(99,102,241,.15) inset;
+}
+
+/* ---------- Headings ---------- */
+.naac-dashboard h1{
+  font-weight:800;
+  font-size:95px;
+  letter-spacing:.2px;
+  background:linear-gradient(90deg,#fff,#c7d2fe,#fff);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+.naac-dashboard h2,
+.naac-dashboard h3{
+  color:#23b5f3;
+font-size:75px;
+padding-left:2405px;
+font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  letter-spacing:.2px;
+
+}
+
+/* ---------- Buttons & links ---------- */
+.naac-dashboard a,
+.naac-dashboard button{
+  position:relative;
+  font-size: 65px;
+}
+
+.naac-dashboard a::after,
+.naac-dashboard button::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  box-shadow:0 0 0 0 var(--accent-soft);
+  opacity:0;
+}
+
+.naac-dashboard a:hover::after,
+.naac-dashboard button:hover::after{
+  opacity:1;
+  animation:ring .9s ease-out forwards;
+}
+
+@keyframes ring{
+  from{box-shadow:0 0 0 0 var(--accent-soft);} 
+  to{box-shadow:0 0 0 8px rgba(99,102,241,0);} 
+}
+
+/* ---------- Inputs / Select ---------- */
+.naac-dashboard input,
+.naac-dashboard select{
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  border:1px solid rgba(148,163,184,.18);
+  color:#eee9e9;
+  font-size: 70px;
+}
+
+.naac-dashboard input:focus,
+.naac-dashboard select:focus{
+  border-color:var(--accent);
+  box-shadow:
+    0 0 0 1px rgba(99,102,241,.45),
+    0 0 18px rgba(99,102,241,.35);
+}
+
+/* ---------- KPI cards glow strip ---------- */
+.naac-dashboard .rounded-2xl .p-5::before{
+  content:"";
+  position:absolute;
+  top:0;left:0;right:0;
+  height:12px;
+  background:linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+/* ---------- NBA rows ---------- */
+.naac-dashboard li{
+  background:rgba(2,6,23,.35);
+  border:1px solid rgba(148,163,184,.12);
+  transition:all .25s ease;
+}
+
+.naac-dashboard li:hover{
+  background:rgba(99,102,241,.08);
+  border-color:rgba(99,102,241,.45);
+  transform:translateX(4px);
+}
+
+/* ---------- Status pulse ---------- */
+.naac-dashboard .text-emerald-400{
+  text-shadow:0 0 10px rgba(52,211,153,.35);
+}
+
+.naac-dashboard .text-yellow-400{
+  text-shadow:0 0 10px rgba(250,204,21,.35);
+}
+
+.naac-dashboard .text-red-400{
+  text-shadow:0 0 10px rgba(251,113,133,.35);
+}
+
+/* ---------- Scrollbar ---------- */
+.naac-dashboard ::-webkit-scrollbar{
+  width:10px;
+  height:10px;
+}
+
+.naac-dashboard ::-webkit-scrollbar-track{
+  background:#020617;
+}
+
+.naac-dashboard ::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,#6366f1,#8b5cf6);
+  border-radius:10px;
+}
+
+/* ---------- Subtle page animation ---------- */
+@keyframes floatIn{
+  from{opacity:0; transform:translateY(10px);} 
+  to{opacity:1; transform:translateY(0);} 
+}
+
+.naac-dashboard > *{
+  animation:floatIn .5s ease both;
+}
+
+/* ---------- Action cards special look ---------- */
+.naac-dashboard h3 + ul{
+  background:rgba(2,6,23,.35);
+  border:1px dashed rgba(99,102,241,.35);
+  border-radius:12px;
+  padding:10px 12px;
+}
+
+/* ---------- Chart tooltip polish (recharts default) ---------- */
+.recharts-tooltip-wrapper{
+  filter:drop-shadow(0 10px 25px rgba(2,6,23,.6));
+}
+
+.recharts-default-tooltip{
+  background:rgba(15,23,42,.9) !important;
+  border:1px solid rgba(99,102,241,.45) !important;
+  border-radius:10px !important;
+  color:#fff !important;
+}
+
+/* ---------- NAAC Criteria legend ---------- */
+.naac-dashboard .criteria-legend{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:10px;
+}
+
+.naac-dashboard .criteria-item{
+  background:rgba(2,6,23,.35);
+  border:1px solid rgba(148,163,184,.14);
+  border-radius:12px;
+  padding:10px 12px;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  transition:all .25s ease;
+}
+
+.naac-dashboard .criteria-item:hover{
+  border-color:rgba(99,102,241,.45);
+  background:rgba(99,102,241,.08);
+  transform:translateY(-2px);
+}
+
+.naac-dashboard .criteria-badge{
+  min-width:36px;
+  height:36px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  background:linear-gradient(135deg,#6366f1,#8b5cf6);
+  box-shadow:0 0 12px rgba(99,102,241,.45);
+}
+
+.naac-dashboard .criteria-text h4{
+  font-size:14px;
+  font-weight:700;
+  line-height:1.2;
+}
+
+.naac-dashboard .criteria-text p{
+  font-size:12px;
+  opacity:.85;
+  margin-top:2px;
+}
+/* ===============================
+   SSR – Clean PDF / Print Layout
+   =============================== */
+
+@media print {
+
+  .naac-dashboard,
+  .naac-dashboard *{
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    animation: none !important;
+    transition: none !important;
+    filter: none !important;
+  }
+
+  /* hide navigation & actions */
+  .naac-dashboard button,
+  .naac-dashboard a,
+  .naac-dashboard select{
+    display: none !important;
+  }
+
+  /* narrative */
+  .naac-dashboard textarea{
+    border: 1px solid #333 !important;
+    min-height: 120px !important;
+  }
+
+  /* sections */
+  .naac-dashboard .rounded-2xl{
+    border: 1px solid #000 !important;
+    margin-bottom: 12px !important;
+    page-break-inside: avoid;
+  }
+
+  /* headings */
+  .naac-dashboard h1{
+    color: #000 !important;
+    -webkit-text-fill-color: #000 !important;
+  }
+
+  .naac-dashboard h2,
+  .naac-dashboard h3{
+    color: #000 !important;
+  }
+
+  /* evidence rows */
+  .naac-dashboard ul li{
+    border: 1px solid #000 !important;
+    background: none !important;
+  }
+
+  /* hide progress bar */
+  .naac-dashboard .h-2{
+    display:none !important;
+  }
+
+  @page{
+    size: A4;
+    margin: 18mm;
+  }
+}
+.book-inventory-adv{
+  min-height:300vh;
+  padding:24px;
+  background:
+    radial-gradient(900px 300px at 10% -10%, rgba(99,102,241,.18), transparent 60%),
+    radial-gradient(800px 400px at 90% 0%, rgba(56,189,248,.12), transparent 60%),
+    #020617;
+  color:#fff;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+/* headings */
+
+.book-inventory-adv h2{
+  font-size:58px;
+  font-weight:800;
+  margin-bottom:10px;
+  background:linear-gradient(90deg,#fff,#c7d2fe,#fff);
+  -webkit-background-clip:text;
+  color:transparent;
+}
+
+.book-inventory-adv h4{
+  margin-top:18px;
+  margin-bottom:8px;
+  font-weight:700;
+  font-size:40px;
+  color:#e0e7ff;
+}
+
+/* card sections */
+
+.book-inventory-adv hr{
+  border:none;
+  height:1px;
+  margin:18px 0;
+  background:linear-gradient(90deg,transparent,#6366f1,transparent);
+}
+
+/* inputs */
+
+.book-inventory-adv input,
+.book-inventory-adv select{
+  background:rgba(15,23,42,.8);
+  border:1px solid rgba(148,163,184,.25);
+  color:#fff;
+  padding:8px 10px;
+  border-radius:10px;
+  margin:4px 6px 4px 0;
+  outline:none;
+  font-size:70px;
+  min-width:100px;
+}
+
+.book-inventory-adv input::placeholder{
+  color:#94a3b8;
+}
+
+.book-inventory-adv input:focus,
+.book-inventory-adv select:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 2px rgba(99,102,241,.35),
+             0 0 18px rgba(99,102,241,.45);
+}
+
+/* buttons */
+
+.book-inventory-adv button{
+  background:linear-gradient(135deg,#4f46e5,#7c3aed);
+  color:#fff;
+  font-size: larger;
+  border:1px solid rgba(255,255,255,.15);
+  padding:7px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+  transition:.25s ease;
+}
+
+.book-inventory-adv button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 25px rgba(79,70,229,.45),
+             0 0 20px rgba(124,58,237,.45);
+}
+
+/* summary strip */
+
+.book-inventory-adv > div:nth-of-type(2){
+  margin-top:8px;
+  margin-bottom:14px;
+  padding:10px 14px;
+  border-radius:14px;
+  background:rgba(15,23,42,.6);
+  border:1px solid rgba(148,163,184,.15);
+  backdrop-filter:blur(10px);
+}
+
+/* table */
+
+.book-inventory-adv table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  margin-top:10px;
+  background:rgba(2,6,23,.55);
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid rgba(148,163,184,.15);
+}
+
+.book-inventory-adv thead{
+  background:linear-gradient(90deg,#1e1b4b,#312e81);
+}
+
+.book-inventory-adv th{
+  padding:12px;
+  text-align:left;
+  font-size:14px;
+  font-weight:700;
+  color:#e0e7ff;
+}
+
+.book-inventory-adv td{
+  padding:10px 12px;
+  font-size:14px;
+  border-top:1px solid rgba(148,163,184,.08);
+}
+
+.book-inventory-adv tbody tr{
+  transition:.25s ease;
+}
+
+.book-inventory-adv tbody tr:hover{
+  background:rgba(99,102,241,.08);
+}
+
+/* action buttons inside table */
+
+.book-inventory-adv td button{
+  padding:5px 9px;
+  font-size:12px;
+  margin-right:4px;
+}
+
+/* reservations & logs */
+
+.book-inventory-adv ul{
+  list-style:none;
+  padding:0;
+  margin-top:8px;
+}
+
+.book-inventory-adv ul li{
+  padding:8px 10px;
+  border-radius:10px;
+  margin-bottom:6px;
+  background:rgba(2,6,23,.55);
+  border:1px solid rgba(148,163,184,.12);
+  transition:.25s ease;
+}
+
+.book-inventory-adv ul li:hover{
+  background:rgba(99,102,241,.1);
+  border-color:rgba(99,102,241,.4);
+}
+
+/* role selector highlight */
+
+.book-inventory-adv select{
+  font-weight:600;
+}
+
+/* responsive */
+
+@media(max-width:800px){
+
+  .book-inventory-adv table,
+  .book-inventory-adv thead,
+  .book-inventory-adv tbody,
+  .book-inventory-adv th,
+  .book-inventory-adv td,
+  .book-inventory-adv tr{
+    display:block;
+  }
+
+  .book-inventory-adv thead{
+    display:none;
+  }
+
+  .book-inventory-adv td{
+    display:flex;
+    justify-content:space-between;
+  }
+
+}
+
